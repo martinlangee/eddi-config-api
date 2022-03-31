@@ -1,4 +1,4 @@
-const { ReasonPhrases, StatusCodes } = require("http-status-codes");
+const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const users = express.Router({ mergeParams: true });
 const pool = require("../db");
@@ -15,9 +15,9 @@ users.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT id, user_name, first_name, last_name, email, created, status, level, image
+                `SELECT *
                  FROM Users;`;
-            res.status(StatusCodes.OK).json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
     // create user
@@ -49,10 +49,10 @@ users.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT id, user_name, first_name, last_name, email, created, status, level, image
+                `SELECT *
                  FROM Users
                  WHERE id = ${id};`
-            res.status(StatusCodes.OK).json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
 
         });
     })

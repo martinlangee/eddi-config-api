@@ -1,3 +1,4 @@
+const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const app = express();
 const usersRouter = require("./routes/users");
@@ -8,6 +9,10 @@ const screensRouter = require("./routes/screens");
 app.use('/users', usersRouter);
 app.use('/widgets', widgetsRouter);
 app.use('/screens', screensRouter);
+app.use((req, res) => {
+    console.log("No route matching"); // not called
+    res.status(StatusCodes.NOT_FOUND).send("Resource not found");
+})
 
 const PORT = 3010;
 app.listen(PORT, () => {

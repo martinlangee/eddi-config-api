@@ -1,3 +1,4 @@
+const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const widgets = express.Router();
 const pool = require("../db");
@@ -8,17 +9,40 @@ widgets.use(express.json()); // => req.body
 // '/widgets' Routes ------
 
 widgets.route('')
-    // get all widgets of specified user
+    // get widgets:
+    // - of specified user 
+    // - and of all public ones if ?public=true is passed additionally
+    // - or all public one if no userId is passed
     .get((req, res, next) => {
-        if (req.query.userId) {
+        if (req.query.userId || req.query.public) {
             tryCatch(req, res, async(req, res) => {
+                const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
+                const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
                 const queryStr =
-                    `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, users.user_name, users.first_name, users.last_name
+                    `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
                      FROM widgets
                      JOIN users
                        ON user_id = users.id
-                     WHERE user_id = ${req.query.userId};`;
-                res.json(await pool.query(queryStr));
+                       WHERE ${queryUser}${queryPublic};`;
+                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            })
+        } else {
+            next();
+        }
+    })
+    // get all widgets on specified screen
+    .get((req, res, next) => {
+        if (req.query.screenId) {
+            tryCatch(req, res, async(req, res) => {
+                const queryStr =
+                    `SELECT *, widgets.size_x as orig_size_x, widgets.size_y as orig_size_y
+                     FROM screens
+                     JOIN screens_widgets
+                       ON screens.id = screen_id
+                     JOIN widgets
+                       ON widget_id = widgets.id
+                     WHERE screens.id= ${req.query.screenId};`;
+                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {
             next();
@@ -29,11 +53,11 @@ widgets.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, users.user_name, users.first_name, users.last_name
+                `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
                  FROM widgets
                  JOIN users
                    ON user_id = users.id;`;
-            res.json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
     // create widget
@@ -55,7 +79,7 @@ widgets.route('')
                     '${public}', 
                     to_timestamp(${Date.now()} / 1000),     
                     to_timestamp(${Date.now()} / 1000));`;
-            res.json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json(await pool.query(queryStr));
         })
     });
 
@@ -65,12 +89,12 @@ widgets.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, content, public, created, last_saved, Users.user_name, Users.first_name, Users.last_name
+                `SELECT name, description, size_x, size_y, thumbnail, content, public, widgets.created, last_saved, user_id, Users.user_name, Users.first_name, Users.last_name
                  FROM widgets
                  JOIN users
                    ON user_id = users.id
                  WHERE widgets.id = ${id};`;
-            res.json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
     // update widget

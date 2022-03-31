@@ -30,7 +30,15 @@ users.route('')
                 `INSERT INTO Users
                    (user_name, first_name, last_name, email, pwd_hash, created, status, level, image)
                  VALUES
-                   ('${user_name}', '${first_name}', '${last_name}', '${email}', '${pwd_hash}', to_timestamp(${Date.now()} / 1000), '${status}', 0);`;
+                   ('${user_name}', 
+                   '${first_name}', 
+                   '${last_name}', 
+                   '${email}',
+                   '${pwd_hash}', 
+                   to_timestamp(${Date.now()} / 1000), 
+                   '${status}',
+                   '${status}',
+                   'NULL');`; // TODO: save image data (from Base64?)
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
     });
@@ -61,7 +69,7 @@ users.route('/:id')
                 addParamQuery('pwd_hash', req.body) +
                 addParamQuery('status', req.body) +
                 addParamQuery('level', req.body) +
-                addParamQuery('image', req.body) +
+                //addParamQuery('image', req.body) +     // TODO: handle data format of image
                 ` WHERE id = ${id};`
             res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })

@@ -3,7 +3,7 @@ const tryCatch = (req, res, func) => {
     try {
         return func(req, res);
     } catch (error) {
-        console.error(error);
+        console.error("######", error);
         res.error(error);
     }
 }

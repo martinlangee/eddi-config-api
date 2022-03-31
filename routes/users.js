@@ -15,7 +15,7 @@ users.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT id, user_name, first_name, last_name, email, created, status
+                `SELECT id, user_name, first_name, last_name, email, created, status, level, image
                  FROM Users;`;
             res.status(StatusCodes.OK).json(await pool.query(queryStr));
         })
@@ -25,10 +25,10 @@ users.route('')
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
             console.log(req.body);
-            const { user_name, first_name, last_name, email, pwd_hash, status } = req.body;
+            const { user_name, first_name, last_name, email, pwd_hash, status, level, image } = req.body;
             const queryStr =
                 `INSERT INTO Users
-                   (user_name, first_name, last_name, email, pwd_hash, created, status, level)
+                   (user_name, first_name, last_name, email, pwd_hash, created, status, level, image)
                  VALUES
                    ('${user_name}', '${first_name}', '${last_name}', '${email}', '${pwd_hash}', to_timestamp(${Date.now()} / 1000), '${status}', 0);`;
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
@@ -41,7 +41,7 @@ users.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT id, user_name, first_name, last_name, email, created, status, level
+                `SELECT id, user_name, first_name, last_name, email, created, status, level, image
                  FROM Users
                  WHERE id = ${id};`
             res.status(StatusCodes.OK).json(await pool.query(queryStr));
@@ -54,12 +54,14 @@ users.route('/:id')
             const { id } = req.params;
             const queryStr =
                 'UPDATE Users SET ' +
-                addParamQuery('first_name', req.body, isFirst = true) +
+                addParamQuery('user_name', req.body, isFirst = true) +
+                addParamQuery('first_name', req.body) +
                 addParamQuery('last_name', req.body) +
                 addParamQuery('email', req.body) +
                 addParamQuery('pwd_hash', req.body) +
                 addParamQuery('status', req.body) +
                 addParamQuery('level', req.body) +
+                addParamQuery('image', req.body) +
                 ` WHERE id = ${id};`
             res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })

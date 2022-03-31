@@ -9,10 +9,19 @@ const screensRouter = require("./routes/screens");
 app.use('/users', usersRouter);
 app.use('/widgets', widgetsRouter);
 app.use('/screens', screensRouter);
+
+app.use('/', (req, res, next) => {
+    res.status(StatusCodes.OK).send(
+        `<h1>EDDI Configurator API is listening ...</h1>
+         `);
+    next(req, res);
+});
+
 app.use((req, res) => {
     console.log("No route matching"); // not called
     res.status(StatusCodes.NOT_FOUND).send("Resource not found");
 })
+
 
 const PORT = 3010;
 app.listen(PORT, () => {

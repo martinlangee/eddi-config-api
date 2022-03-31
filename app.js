@@ -5,7 +5,7 @@ const widgetsRouter = require("./routes/widgets");
 
 // Routes ------
 app.use('/users', usersRouter);
-app.use('/widgets', vidgetsRouter);
+app.use('/widgets', widgetsRouter);
 
 app.listen(3000, () => {
     console.log(`server is listening on port 3000`);

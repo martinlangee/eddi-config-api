@@ -1,12 +1,12 @@
 -- for PostgreSQL
 
--- DROP DATABASE IF EXISTS EDDI_DB;
--- CREATE DATABASE EDDI_DB;
+-- DROP DATABASE IF EXISTS eddi_db;
+-- CREATE DATABASE eddi_db;
 
 -- /c enter database
 
-DROP TABLE IF EXISTS project_widgets;
-DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS screen_widgets;
+DROP TABLE IF EXISTS screens;
 DROP TABLE IF EXISTS widgets;
 DROP TABLE IF EXISTS users;
 
@@ -18,7 +18,8 @@ CREATE TABLE users (
   email varchar UNIQUE NOT NULL,
   pwd_hash varchar NOT NULL,
   created TIMESTAMP,
-  status varchar(10)
+  status varchar(10),
+  level INT
 );
 
 CREATE TABLE widgets (
@@ -26,6 +27,8 @@ CREATE TABLE widgets (
   user_id INT,
   name varchar NOT NULL,
   description varchar,
+  size_x INT NOT NULL,
+  size_y INT NOT NULL,
   thumbnail BYTEA,
   content varchar,
   public BOOLEAN,
@@ -54,17 +57,16 @@ CREATE TABLE screens (
         ON DELETE CASCADE
 );
 
-CREATE TABLE project_widgets (
-  project_id INT,
+CREATE TABLE screen_widgets (
+  screen_id INT,
   widget_id INT,
   x_pos INT,
   y_pos INT,
   size_x INT NOT NULL,
   size_y INT NOT NULL,
-  created TIMESTAMP,
-  CONSTRAINT fk_projects
-    FOREIGN KEY(project_id) 
-	    REFERENCES projects(id)
+  CONSTRAINT fk_screens
+    FOREIGN KEY(screen_id) 
+	    REFERENCES screens(id)
         ON DELETE CASCADE,
   CONSTRAINT fk_widgets
     FOREIGN KEY(widget_id) 

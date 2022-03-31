@@ -56,9 +56,9 @@ widgets.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT name, description, size_x, size_y, icon, content, public, created, last_saved, Users.first_name, Users.last_name
-                 FROM Vidgets
-                 JOIN Users
+                `SELECT name, description, size_x, size_y, thumbnail, content, public, created, last_saved, Users.user_name, Users.first_name, Users.last_name
+                 FROM widgets
+                 JOIN users
                    ON user_id = Users.id
                  WHERE id = ${id};`;
             res.json(await pool.query(queryStr));
@@ -68,14 +68,14 @@ widgets.route('/:id')
     .put((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
-            const { name, description, size_x, size_y, icon, content, public } = req.body;
+            const { name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                'UPDATE Vidgets SET ' +
-                getParamQuery('name', name, first = true) +
+                'UPDATE widgets SET ' +
+                getParamQuery('name', name, isFirst = true) +
                 getParamQuery('description', description) +
                 getParamQuery('size_x', size_x) +
                 getParamQuery('size_y', size_y) +
-                getParamQuery('icon', icon) +
+                getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
                 ` WHERE id = ${id};`
@@ -89,7 +89,7 @@ widgets.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             res.json(await pool.query(
-                `DELETE FROM Vidgets 
+                `DELETE FROM widgets 
                  WHERE id = ${id};`
             ));
         })

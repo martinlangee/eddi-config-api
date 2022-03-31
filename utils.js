@@ -19,8 +19,8 @@ const getParamQuery = (name, value, first = false) => {
     return res;
 }
 
-const addParamQuery = (name, dataObj, first = false) => {
-    return getParamQuery(name, dataObj[name], first);
+const addParamQuery = (name, dataObj, isFirst = false) => {
+    return getParamQuery(name, dataObj[name], isFirst);
 }
 
 module.exports = { tryCatch, getParamQuery, addParamQuery };

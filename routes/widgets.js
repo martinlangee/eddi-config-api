@@ -1,8 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
-const widgets = express.Router();
 const pool = require("../db");
-const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
+const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
+
+const widgets = express.Router();
 
 widgets.use(express.json()); // => req.body
 
@@ -88,8 +89,8 @@ widgets.route('')
                     '${thumbnail}', 
                     '${content}', 
                     '${public}', 
-                    to_timestamp(${Date.now()} / 1000),     
-                    to_timestamp(${Date.now()} / 1000));`;
+                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
+                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT});`;
             res.status(StatusCodes.OK).json(await pool.query(queryStr));
         })
     });
@@ -122,7 +123,7 @@ widgets.route('/:id')
                 getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
-                getParamQuery('last_saved', `to_timestamp(${Date.now()} / 1000)`) +
+                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${id};`
             console.log({ id, queryStr });
             res.json(await pool.query(queryStr));

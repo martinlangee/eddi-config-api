@@ -2,7 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screens = express.Router();
 const pool = require("../db");
-const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
+const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
 
 screens.use(express.json()); // => req.body
 
@@ -71,28 +71,27 @@ screens.route('')
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
-
-// create screen
-.post((req, res) => {
-    tryCatch(req, res, async(req, res) => {
-        console.log(req.body);
-        const { user_id, name, description, size_x, size_y, thumbnail, content, public } = req.body;
-        const queryStr =
-            `INSERT INTO screens
-                   (user_id, name, description, size_x, size_y, thumbnail, public, created, last_saved)
-                 VALUES
-                   ('${user_id}', 
-                    '${name}', 
-                    '${description}', 
-                    '${size_x}', 
-                    '${size_y}', 
-                    '${thumbnail}', 
-                    '${public}',
-                    to_timestamp(${Date.now()} / 1000), 
-                    to_timestamp(${Date.now()} / 1000));`;
-        res.json(await pool.query(queryStr));
-    })
-});
+    // create screen
+    .post((req, res) => {
+        tryCatch(req, res, async(req, res) => {
+            console.log(req.body);
+            const { user_id, name, description, size_x, size_y, thumbnail, content, public } = req.body;
+            const queryStr =
+                `INSERT INTO screens
+                    (user_id, name, description, size_x, size_y, thumbnail, public, created, last_saved)
+                    VALUES
+                    ('${user_id}', 
+                        '${name}', 
+                        '${description}', 
+                        '${size_x}', 
+                        '${size_y}', 
+                        '${thumbnail}', 
+                        '${public}',
+                        to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
+                        to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT});`;
+            res.json(await pool.query(queryStr));
+        })
+    });
 
 screens.route('/:id')
     // get single screen
@@ -122,7 +121,7 @@ screens.route('/:id')
                 getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
-                getParamQuery('last_saved', `to_timestamp(${Date.now()} / 1000)`) +
+                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${id};`
             console.log({ id, queryStr });
             res.json(await pool.query(queryStr));

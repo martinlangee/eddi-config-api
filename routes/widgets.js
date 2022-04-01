@@ -8,6 +8,8 @@ widgets.use(express.json()); // => req.body
 
 // '/widgets' Routes ------
 
+const WIDGET_COLUMNS = `widgets.id, widgets.name, widgets.description, widgets.size_x, widgets.size_y, widgets.thumbnail, widgets.public, to_char(widgets.created, 'YYYY-MM-DD HH24:MI:SS') as created, to_char(last_saved, 'YYYY-MM-DD HH24:MI:SS') as last_saved, widgets.user_id`;
+
 widgets.route('')
     // get widgets:
     // - of specified user 
@@ -19,7 +21,7 @@ widgets.route('')
                 const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
                 const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
                 const queryStr =
-                    `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
+                    `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                      FROM widgets
                      JOIN users
                        ON user_id = users.id
@@ -35,7 +37,7 @@ widgets.route('')
         if (req.query.screenId) {
             tryCatch(req, res, async(req, res) => {
                 const queryStr =
-                    `SELECT *, widgets.size_x as orig_size_x, widgets.size_y as orig_size_y
+                    `SELECT ${WIDGET_COLUMNS}
                      FROM screens
                      JOIN screens_widgets
                        ON screens.id = screen_id
@@ -53,7 +55,7 @@ widgets.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, public, widgets.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
+                `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                  FROM widgets
                  JOIN users
                    ON user_id = users.id;`;
@@ -89,7 +91,7 @@ widgets.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, content, public, widgets.created, last_saved, user_id, Users.user_name, Users.first_name, Users.last_name
+                `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                  FROM widgets
                  JOIN users
                    ON user_id = users.id

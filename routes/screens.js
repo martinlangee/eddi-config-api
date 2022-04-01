@@ -19,7 +19,7 @@ screens.route('')
                 const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
                 const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
                 const queryStr =
-                    `SELECT name, description, size_x, size_y, thumbnail, public, screens.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
+                    `SELECT id, name, description, size_x, size_y, thumbnail, public, screens.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
                      FROM screens
                      JOIN users
                        ON user_id = users.id

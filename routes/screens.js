@@ -2,11 +2,22 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screens = express.Router();
 const pool = require("../db");
-const { tryCatch, getParamQuery } = require("../utils");
+const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
 
 screens.use(express.json()); // => req.body
 
 // '/screens' Routes ------
+
+const SCREEN_COLUMNS = `screens.id, 
+                        screens.name, 
+                        screens.description, 
+                        screens.size_x, 
+                        screens.size_y, 
+                        screens.thumbnail, 
+                        screens.public, 
+                        to_char(screens.created,  ${DATETIME_DISPLAY_FORMAT}) as created, 
+                        to_char(screens.last_saved,  ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
+                        screens.user_id`;
 
 screens.route('')
     // get screens:
@@ -19,7 +30,7 @@ screens.route('')
                 const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
                 const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
                 const queryStr =
-                    `SELECT id, name, description, size_x, size_y, thumbnail, public, screens.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
+                    `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
                      FROM screens
                      JOIN users
                        ON user_id = users.id
@@ -53,7 +64,7 @@ screens.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, public, screens.created, last_saved, user_id, users.user_name, users.first_name, users.last_name
+                `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
                  FROM screens
                  JOIN users
                    ON user_id = users.id;`;
@@ -89,7 +100,7 @@ screens.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT name, description, size_x, size_y, thumbnail, public, screens.created, last_saved, user_id, Users.user_name, Users.first_name, Users.last_name
+                `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
                  FROM screens
                  JOIN users
                    ON user_id = users.id
@@ -111,6 +122,7 @@ screens.route('/:id')
                 getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
+                getParamQuery('last_saved', `to_timestamp(${Date.now()} / 1000)`) +
                 ` WHERE id = ${id};`
             console.log({ id, queryStr });
             res.json(await pool.query(queryStr));

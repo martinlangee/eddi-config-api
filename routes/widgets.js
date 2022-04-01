@@ -2,13 +2,22 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const widgets = express.Router();
 const pool = require("../db");
-const { tryCatch, getParamQuery } = require("../utils");
+const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
 
 widgets.use(express.json()); // => req.body
 
 // '/widgets' Routes ------
 
-const WIDGET_COLUMNS = `widgets.id, widgets.name, widgets.description, widgets.size_x, widgets.size_y, widgets.thumbnail, widgets.public, to_char(widgets.created, 'YYYY-MM-DD HH24:MI:SS') as created, to_char(last_saved, 'YYYY-MM-DD HH24:MI:SS') as last_saved, widgets.user_id`;
+const WIDGET_COLUMNS = `widgets.id, 
+                        widgets.name, 
+                        widgets.description, 
+                        widgets.size_x, 
+                        widgets.size_y, 
+                        widgets.thumbnail, 
+                        widgets.public, 
+                        to_char(widgets.created, ${DATETIME_DISPLAY_FORMAT}) as created, 
+                        to_char(last_saved, ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
+                        widgets.user_id`;
 
 widgets.route('')
     // get widgets:

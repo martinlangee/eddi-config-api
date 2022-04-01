@@ -23,4 +23,6 @@ const addParamQuery = (name, dataObj, isFirst = false) => {
     return getParamQuery(name, dataObj[name], isFirst);
 }
 
-module.exports = { tryCatch, getParamQuery, addParamQuery };
+const DATETIME_DISPLAY_FORMAT = `'YYYY-MM-DD HH24:MI'`;
+
+module.exports = { tryCatch, getParamQuery, addParamQuery, DATETIME_DISPLAY_FORMAT };

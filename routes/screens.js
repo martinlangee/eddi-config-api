@@ -35,6 +35,7 @@ screens.route('')
                      JOIN users
                        ON user_id = users.id
                      WHERE ${queryUser}${queryPublic};`;
+                console.log({ queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {
@@ -44,15 +45,17 @@ screens.route('')
     // get all screens a specified widget is used on
     .get((req, res, next) => {
         if (req.query.widgetId) {
+            widgetId = req.query.widgetId;
             tryCatch(req, res, async(req, res) => {
                 const queryStr =
-                    `SELECT *
+                    `SELECT screens.id as screen_id, screens.user_id, screens.name, screens.description, screens.public
                      FROM widgets
                      JOIN screens_widgets
                        ON widgets.id = widget_id
                      JOIN screens
                        ON screens.id = screen_id
-                     WHERE widgets.id = ${req.query.widgetId};`;
+                     WHERE widgets.id = ${widgetId}`;
+                console.log({ widgetId, queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {
@@ -68,6 +71,7 @@ screens.route('')
                  FROM screens
                  JOIN users
                    ON user_id = users.id;`;
+            console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
@@ -79,17 +83,18 @@ screens.route('')
             const queryStr =
                 `INSERT INTO screens
                     (user_id, name, description, size_x, size_y, thumbnail, public, created, last_saved)
-                    VALUES
+                 VALUES
                     ('${user_id}', 
-                        '${name}', 
-                        '${description}', 
-                        '${size_x}', 
-                        '${size_y}', 
-                        '${thumbnail}', 
-                        '${public}',
-                        to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
-                        to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT});`;
-            res.json(await pool.query(queryStr));
+                     '${name}', 
+                     '${description}', 
+                     '${size_x}', 
+                     '${size_y}', 
+                     '${thumbnail}', 
+                     '${public}',
+                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
+                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT});`;
+            console.log({ queryStr });
+            res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
     });
 
@@ -104,6 +109,7 @@ screens.route('/:id')
                  JOIN users
                    ON user_id = users.id
                  WHERE screens.id = ${id};`;
+            console.log({ id, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
@@ -124,7 +130,7 @@ screens.route('/:id')
                 getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${id};`
             console.log({ id, queryStr });
-            res.json(await pool.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })
     })
     // delete screen
@@ -132,10 +138,11 @@ screens.route('/:id')
     .delete((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
-            res.json(await pool.query(
+            const queryStr =
                 `DELETE FROM screens 
                  WHERE id = ${id};`
-            ));
+            console.log({ id, queryStr });
+            res.status(StatusCodes.OK).json(await pool.query(queryStr));
         })
     });
 

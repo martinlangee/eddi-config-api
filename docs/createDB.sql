@@ -64,6 +64,7 @@ CREATE TABLE screen_widgets (
   y_pos INT,
   size_x INT NOT NULL,
   size_y INT NOT NULL,
+  PRIMARY KEY (screen_id, widget_id),
   CONSTRAINT fk_screens
     FOREIGN KEY(screen_id) 
 	    REFERENCES screens(id)

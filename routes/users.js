@@ -17,6 +17,7 @@ users.route('')
             const queryStr =
                 `SELECT *
                  FROM Users;`;
+            console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
@@ -39,6 +40,7 @@ users.route('')
                    '${status}',
                    '${status}',
                    'NULL');`; // TODO: save image data (from Base64?)
+            console.log({ queryStr });
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
     });
@@ -52,6 +54,7 @@ users.route('/:id')
                 `SELECT *
                  FROM Users
                  WHERE id = ${id};`
+            console.log({ id, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
 
         });
@@ -71,6 +74,7 @@ users.route('/:id')
                 addParamQuery('level', req.body) +
                 //addParamQuery('image', req.body) +     // TODO: handle data format of image
                 ` WHERE id = ${id};`
+            console.log({ id, queryStr });
             res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })
     })
@@ -79,9 +83,11 @@ users.route('/:id')
     .delete((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
-            const success = await pool.query(
+            const queryStr =
                 `DELETE FROM Users 
-                 WHERE id = ${id};`).rowCount > 0;
+                 WHERE id = ${id};`
+            console.log({ id, queryStr });
+            const success = await pool.query(queryStr).rowCount > 0;
             res.status(success ? StatusCodes.OK : StatusCodes.NOT_FOUND)
                 .json({
                     message: (success ? `User ${id} deleted` : `User ${id} not found`),

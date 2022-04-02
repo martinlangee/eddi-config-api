@@ -6,24 +6,26 @@ const app = express();
 const usersRouter = require("./routes/users");
 const widgetsRouter = require("./routes/widgets");
 const screensRouter = require("./routes/screens");
+const screensWidgetsRouter = require("./routes/screensWidgets");
 
 app.use(cors());
 
 // log every request
 app.use((req, res, next) => {
-    console.log('URL:', req.originalUrl);
+    console.log(req.method, req.originalUrl);
     next();
 });
 
 // Routes ------
-app.use('/users', usersRouter);
-app.use('/widgets', widgetsRouter);
-app.use('/screens', screensRouter);
+app.use('/usr', usersRouter);
+app.use('/widget', widgetsRouter);
+app.use('/screen', screensRouter);
+app.use('/screenwidget', screensWidgetsRouter);
 
 // Error handling -----
 app.get('*', function(req, res, next) {
     const error = new Error(
-        `${req.ip} tried to access ${req.originalUrl}`,
+        `${req.ip} tried to ${req.method} ${req.originalUrl}`,
     );
     error.statusCode = StatusCodes.MOVED_PERMANENTLY;
     next(error);

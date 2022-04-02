@@ -1,11 +1,9 @@
 -- > widgets that are used on a screen
-SELECT *, widgets.size_x as orig_size_x, widgets.size_y as orig_size_y
-FROM screens
-JOIN screens_widgets
-	ON screens.id = screen_id
+SELECT screen_id, widget_id, x_pos, y_pos, screens_widgets.size_x, screens_widgets.size_y, widgets.user_id, widgets.name, widgets.thumbnail, widgets.public
+FROM screens_widgets
 JOIN widgets
-	ON widget_id = widgets.id
-WHERE screens.id = screenId;
+  ON widget_id = widgets.id
+WHERE screen_id = screenId;
 
 -- > screens that a widget is used on
 SELECT *

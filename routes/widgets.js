@@ -28,32 +28,15 @@ widgets.route('')
     .get((req, res, next) => {
         if (req.query.userId || req.query.public) {
             tryCatch(req, res, async(req, res) => {
-                const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
+                const queryUserId = req.query.userId ? `user_id = ${req.query.userId}` : '';
                 const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
                 const queryStr =
                     `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                      FROM widgets
                      JOIN users
                        ON user_id = users.id
-                       WHERE ${queryUser}${queryPublic};`;
-                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
-            })
-        } else {
-            next();
-        }
-    })
-    // get all widgets on specified screen
-    .get((req, res, next) => {
-        if (req.query.screenId) {
-            tryCatch(req, res, async(req, res) => {
-                const queryStr =
-                    `SELECT ${WIDGET_COLUMNS}
-                     FROM screens
-                     JOIN screens_widgets
-                       ON screens.id = screen_id
-                     JOIN widgets
-                       ON widget_id = widgets.id
-                     WHERE screens.id= ${req.query.screenId};`;
+                     WHERE ${queryUserId}${queryPublic};`;
+                console.log({ queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {
@@ -69,6 +52,7 @@ widgets.route('')
                  FROM widgets
                  JOIN users
                    ON user_id = users.id;`;
+            console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
@@ -91,7 +75,8 @@ widgets.route('')
                     '${public}', 
                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT});`;
-            res.status(StatusCodes.OK).json(await pool.query(queryStr));
+            console.log({ queryStr });
+            res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
     });
 
@@ -106,6 +91,7 @@ widgets.route('/:id')
                  JOIN users
                    ON user_id = users.id
                  WHERE widgets.id = ${id};`;
+            console.log({ id, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
     })
@@ -126,7 +112,7 @@ widgets.route('/:id')
                 getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${id};`
             console.log({ id, queryStr });
-            res.json(await pool.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })
     })
     // delete widget
@@ -134,10 +120,10 @@ widgets.route('/:id')
     .delete((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
-            res.json(await pool.query(
+            const queryStr =
                 `DELETE FROM widgets 
-                 WHERE id = ${id};`
-            ));
+                 WHERE id = ${id};`;
+            res.status(StatusCodes.OK).json(await pool.query(queryStr));
         })
     });
 

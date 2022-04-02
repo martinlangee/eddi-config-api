@@ -5,7 +5,7 @@ const tryCatch = async(req, res, func) => {
     try {
         return await func(req, res);
     } catch (error) {
-        console.error("######", error);
+        console.error("!!!", error);
         res.status(error.message);
     }
 }

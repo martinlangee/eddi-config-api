@@ -16,10 +16,14 @@ CREATE TABLE users (
   first_name varchar,
   last_name varchar,
   email varchar UNIQUE NOT NULL,
+  showPublicScreens BOOLEAN,
   pwd_hash varchar NOT NULL,
   created TIMESTAMP,
   status varchar(10),
-  level INT
+  level INT,
+  image BYTEA,
+  see_public_screens BOOLEAN,
+  see_public_widgets BOOLEAN
 );
 
 CREATE TABLE widgets (

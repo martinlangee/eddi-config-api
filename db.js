@@ -1,4 +1,5 @@
 const Pool = require("pg").Pool;
+
 const pool = new Pool({
     user: "postgres",
     password: "brasil",
@@ -7,4 +8,23 @@ const pool = new Pool({
     port: 5432
 })
 
-module.exports = pool;
+const dbGetSeePublicWidgets = async(userId) => {
+    const queryStr =
+        `SELECT see_public_widgets
+         FROM users
+         WHERE id = ${userId}`;
+    console.log({ queryStr });
+    return (await pool.query(queryStr)).rows[0].see_public_widgets;
+}
+
+const dbGetSeePublicScreens = async(userId) => {
+    const queryStr =
+        `SELECT see_public_screens
+         FROM users
+         WHERE id = ${userId}`;
+    console.log({ queryStr });
+    const row = (await pool.query(queryStr)).rows[0].see_public_screens;
+    return row;
+}
+
+module.exports = { pool, dbGetSeePublicWidgets, dbGetSeePublicScreens };

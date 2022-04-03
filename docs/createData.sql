@@ -1,12 +1,12 @@
 INSERT INTO 
-    users (user_name, first_name, last_name, email, pwd_hash, created, status, level)
+    users (user_name, first_name, last_name, email, pwd_hash, created, status, level, see_public_screens, see_public_widgets)
 VALUES
-    ('martin', 'Martin', 'Lange', 'ml@abcde.fr', 'XXXX', '2020-12-11', 'active', 9),
-    ('alex', 'Alex', 'Schmidt', 'as@ddddd.der', 'XXXX', '2020-11-10', 'active', 0),
-    ('claudia', 'Claudia', 'Taylor', 'ct@rrrfv.at', 'XXXX', '2020-10-09', 'active', 0),
-    ('boriss', 'Boris', 'Gudunov', 'bg@jkuzzzze.se', 'XXXX', '2020-09-12', 'active', 0),
-    ('annja', 'Anja', 'Horstmann', 'ah@ukkkw.dk', 'XXXX', '2020-09-11', 'active', 0),
-    ('egun', 'Egon', 'Miller', 'em@abcde.co.uk', 'XXXX', '2020-11-11', 'active', 0);
+    ('martin', 'Martin', 'Lange', 'ml@abcde.fr', 'XXXX', '2020-12-11', 'active', 9, true, true),
+    ('alex', 'Alex', 'Schmidt', 'as@ddddd.der', 'XXXX', '2020-11-10', 'active', 0, true, true),
+    ('claudia', 'Claudia', 'Taylor', 'ct@rrrfv.at', 'XXXX', '2020-10-09', 'active', 0, true, true),
+    ('boriss', 'Boris', 'Gudunov', 'bg@jkuzzzze.se', 'XXXX', '2020-09-12', 'active', 0, false, false),
+    ('annja', 'Anja', 'Horstmann', 'ah@ukkkw.dk', 'XXXX', '2020-09-11', 'active', 0, false, false),
+    ('egun', 'Egon', 'Miller', 'em@abcde.co.uk', 'XXXX', '2020-11-11', 'active', 0, false, false);
 
 INSERT INTO 
     widgets (user_id, name, description, size_x, size_y, thumbnail, content, public, created, last_saved)

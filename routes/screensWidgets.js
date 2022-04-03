@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screensWidgets = express.Router();
-const pool = require("../db");
+const { pool } = require("../db");
 const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
 
 screensWidgets.use(express.json()); // => req.body

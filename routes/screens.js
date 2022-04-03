@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screens = express.Router();
-const pool = require("../db");
+const { pool, dbGetSeePublicScreens } = require("../db");
 const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
 
 screens.use(express.json()); // => req.body
@@ -27,15 +27,15 @@ screens.route('')
     .get((req, res, next) => {
         if (req.query.userId || req.query.public) {
             tryCatch(req, res, async(req, res) => {
-                const queryUser = req.query.userId ? `user_id = ${req.query.userId}` : '';
-                const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
+                const userId = req.query.userId;
+                const seePublic = await dbGetSeePublicScreens(userId);
                 const queryStr =
                     `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
                      FROM screens
                      JOIN users
                        ON user_id = users.id
-                     WHERE ${queryUser}${queryPublic};`;
-                console.log({ queryStr });
+                     WHERE user_id = ${userId} OR users.see_public_screens = ${seePublic};`;
+                console.log({ userId, seePublic, queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {

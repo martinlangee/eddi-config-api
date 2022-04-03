@@ -1,7 +1,7 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const users = express.Router({ mergeParams: true });
-const pool = require("../db");
+const { pool } = require("../db");
 const { tryCatch, addParamQuery } = require("../utils");
 
 users.use(express.json()); // => req.body
@@ -29,7 +29,7 @@ users.route('')
             const { user_name, first_name, last_name, email, pwd_hash, status, level, image } = req.body;
             const queryStr =
                 `INSERT INTO Users
-                   (user_name, first_name, last_name, email, pwd_hash, created, status, level, image)
+                   (user_name, first_name, last_name, email, pwd_hash, created, status, level, image, see_public_widgets, see_public_screens)
                  VALUES
                    ('${user_name}', 
                    '${first_name}', 
@@ -39,7 +39,9 @@ users.route('')
                    to_timestamp(${Date.now()} / 1000), 
                    '${status}',
                    '${status}',
-                   'NULL');`; // TODO: save image data (from Base64?)
+                   'NULL'         
+                   'false',
+                   'false');`; // TODO: save image data (from Base64?)
             console.log({ queryStr });
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
@@ -56,24 +58,38 @@ users.route('/:id')
                  WHERE id = ${id};`
             console.log({ id, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
-
         });
     })
     // update user
     .put((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
-            const queryStr =
-                'UPDATE Users SET ' +
-                addParamQuery('user_name', req.body, isFirst = true) +
-                addParamQuery('first_name', req.body) +
-                addParamQuery('last_name', req.body) +
-                addParamQuery('email', req.body) +
-                addParamQuery('pwd_hash', req.body) +
-                addParamQuery('status', req.body) +
-                addParamQuery('level', req.body) +
-                //addParamQuery('image', req.body) +     // TODO: handle data format of image
-                ` WHERE id = ${id};`
+            let queryStr = '';
+            if (req.query.see_public_widgets) {
+                queryStr =
+                    'UPDATE Users SET ' +
+                    addParamQuery('see_public_widgets', req.query, isFirst = true) +
+                    ` WHERE id = ${id};`
+            } else if (req.query.see_public_screens) {
+                queryStr =
+                    'UPDATE Users SET ' +
+                    addParamQuery('see_public_screens', req.query, isFirst = true) +
+                    ` WHERE id = ${id};`
+            } else {
+                queryStr =
+                    'UPDATE Users SET ' +
+                    addParamQuery('user_name', req.body, isFirst = true) +
+                    addParamQuery('first_name', req.body) +
+                    addParamQuery('last_name', req.body) +
+                    addParamQuery('email', req.body) +
+                    addParamQuery('pwd_hash', req.body) +
+                    addParamQuery('status', req.body) +
+                    addParamQuery('level', req.body) +
+                    //addParamQuery('image', req.body) +     // TODO: handle data format of image
+                    addParamQuery('see_public_widgets', req.body) +
+                    addParamQuery('see_public_screens', req.body) +
+                    ` WHERE id = ${id};`
+            }
             console.log({ id, queryStr });
             res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })

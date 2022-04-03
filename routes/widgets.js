@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
-const pool = require("../db");
+const { pool, dbGetSeePublicWidgets } = require("../db");
 const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
 
 const widgets = express.Router();
@@ -23,35 +23,38 @@ const WIDGET_COLUMNS = `widgets.id,
 widgets.route('')
     // get widgets:
     // - of specified user 
-    // - and of all public ones if ?public=true is passed additionally
+    // - and of all public ones if < users.seePublicWidgets === true > additionally
     // - or all public one if no userId is passed
     .get((req, res, next) => {
-        if (req.query.userId || req.query.public) {
+
+        if (req.query.userId) {
             tryCatch(req, res, async(req, res) => {
-                const queryUserId = req.query.userId ? `user_id = ${req.query.userId}` : '';
-                const queryPublic = req.query.public === 'true' ? (req.query.userId ? ' OR public = true' : 'public = true') : '';
+                const userId = req.query.userId;
+                const seePublic = await dbGetSeePublicWidgets(userId);
                 const queryStr =
                     `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                      FROM widgets
                      JOIN users
                        ON user_id = users.id
-                     WHERE ${queryUserId}${queryPublic};`;
-                console.log({ queryStr });
+                     WHERE user_id = ${userId} OR users.see_public_widgets = ${seePublic};`;
+                console.log({ userId, seePublic, queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
         } else {
             next();
         }
     })
-    // get all widgets 
-    // TODO: this should only be possible for admin!
+    // get all widgets or only all public ones is <?public=true> is passed as query param
+    // TODO: private widgets should only be visible for admin!
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
+            const queryOnlyPublic = req.query.public === 'true' ? ' WHERE users.see_public_widgets = true' : '';
             const queryStr =
                 `SELECT ${WIDGET_COLUMNS}, users.user_name, users.first_name, users.last_name
                  FROM widgets
                  JOIN users
-                   ON user_id = users.id;`;
+                   ON user_id = users.id
+                   ${queryOnlyPublic};`;
             console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })

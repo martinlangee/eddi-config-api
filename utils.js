@@ -1,6 +1,6 @@
 const moment = require("moment");
 
-/// encapsules a call to the passed function into a try..catch block
+/// encapsules a call to the passed async function into a try..catch block
 const tryCatch = async(req, res, func) => {
     try {
         return await func(req, res);

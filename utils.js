@@ -23,7 +23,8 @@ const getParamQuery = (name, value, first = false, valueQuotes = true) => {
     const q = valueQuotes ? `'` : ``;
     // only if surrounding quotes are required, 'escape' them with "''"  
     if (valueQuotes) value = replaceQuotes(value);
-    const res = (value && firstIsHandled ? ', ' : '') + (value ? `${name} = ${q}${value}${q}` : ``);
+    // value must be tested explicitely if not 'undefined' due to possible boolean type values!!
+    const res = (value !== undefined && firstIsHandled ? ', ' : '') + (value !== undefined ? `${name} = ${q}${value}${q}` : ``);
     firstIsHandled = true;
     return res;
 }

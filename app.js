@@ -6,7 +6,7 @@ const app = express();
 const usersRouter = require("./routes/users");
 const widgetsRouter = require("./routes/widgets");
 const screensRouter = require("./routes/screens");
-const screensWidgetsRouter = require("./routes/screensWidgets");
+const screenWidgetsRouter = require("./routes/screenWidgets");
 
 app.use(cors());
 
@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 app.use('/usr', usersRouter);
 app.use('/widget', widgetsRouter);
 app.use('/screen', screensRouter);
-app.use('/screenwidget', screensWidgetsRouter);
+app.use('/screenwidgets', screenWidgetsRouter);
 
 // Error handling -----
 app.get('*', function(req, res, next) {

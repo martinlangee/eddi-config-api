@@ -8,6 +8,11 @@ const pool = new Pool({
     port: 5432
 })
 
+const TABLE_USERS = 'users';
+const TABLE_WIDGETS = 'widgets';
+const TABLE_SCREENS = 'screens';
+const TABLE_SCREENSWIDGETS = 'screens_widgets';
+
 const dbGetSeePublicWidgets = async(userId) => {
     const queryStr =
         `SELECT see_public_widgets
@@ -27,4 +32,4 @@ const dbGetSeePublicScreens = async(userId) => {
     return row;
 }
 
-module.exports = { pool, dbGetSeePublicWidgets, dbGetSeePublicScreens };
+module.exports = { pool, TABLE_USERS, TABLE_WIDGETS, TABLE_SCREENS, TABLE_SCREENSWIDGETS, dbGetSeePublicWidgets, dbGetSeePublicScreens };

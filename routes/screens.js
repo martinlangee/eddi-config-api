@@ -1,23 +1,23 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screens = express.Router();
-const { pool, dbGetSeePublicScreens } = require("../db");
+const { pool, TABLE_USERS, TABLE_SCREENS, dbGetSeePublicScreens } = require("../db");
 const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
 
 screens.use(express.json()); // => req.body
 
 // '/screens' Routes ------
 
-const SCREEN_COLUMNS = `screens.id, 
-                        screens.name, 
-                        screens.description, 
-                        screens.size_x, 
-                        screens.size_y, 
-                        screens.thumbnail, 
-                        screens.public, 
-                        to_char(screens.created,  ${DATETIME_DISPLAY_FORMAT}) as created, 
-                        to_char(screens.last_saved,  ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
-                        screens.user_id`;
+const SCREEN_COLUMNS = `${TABLE_SCREENS}.id, 
+                        ${TABLE_SCREENS}.name, 
+                        ${TABLE_SCREENS}.description, 
+                        ${TABLE_SCREENS}.size_x, 
+                        ${TABLE_SCREENS}.size_y, 
+                        ${TABLE_SCREENS}.thumbnail, 
+                        ${TABLE_SCREENS}.public, 
+                        to_char(${TABLE_SCREENS}.created,  ${DATETIME_DISPLAY_FORMAT}) as created, 
+                        to_char(${TABLE_SCREENS}.last_saved,  ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
+                        ${TABLE_SCREENS}.user_id`;
 
 screens.route('')
     // get screens:
@@ -30,11 +30,11 @@ screens.route('')
                 const userId = req.query.userId;
                 const seePublic = await dbGetSeePublicScreens(userId);
                 const queryStr =
-                    `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
-                     FROM screens
-                     JOIN users
-                       ON user_id = users.id
-                     WHERE user_id = ${userId} OR users.see_public_screens = ${seePublic};`;
+                    `SELECT ${SCREEN_COLUMNS}, ${TABLE_USERS}.user_name, ${TABLE_USERS}.first_name, ${TABLE_USERS}.last_name
+                     FROM ${TABLE_SCREENS}
+                     JOIN ${TABLE_USERS}
+                       ON user_id = ${TABLE_USERS}.id
+                     WHERE user_id = ${userId} OR ${TABLE_USERS}.see_public_screens = ${seePublic};`;
                 console.log({ userId, seePublic, queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
             })
@@ -48,12 +48,12 @@ screens.route('')
             widgetId = req.query.widgetId;
             tryCatch(req, res, async(req, res) => {
                 const queryStr =
-                    `SELECT screens.id as screen_id, screens.user_id, screens.name, screens.description, screens.public
+                    `SELECT ${TABLE_SCREENS}.id as screen_id, ${TABLE_SCREENS}.user_id, ${TABLE_SCREENS}.name, ${TABLE_SCREENS}.description, ${TABLE_SCREENS}.public
                      FROM widgets
                      JOIN screens_widgets
                        ON widgets.id = widget_id
-                     JOIN screens
-                       ON screens.id = screen_id
+                     JOIN ${TABLE_SCREENS}
+                       ON ${TABLE_SCREENS}.id = screen_id
                      WHERE widgets.id = ${widgetId}`;
                 console.log({ widgetId, queryStr });
                 res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
@@ -67,10 +67,10 @@ screens.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
-                 FROM screens
-                 JOIN users
-                   ON user_id = users.id;`;
+                `SELECT ${SCREEN_COLUMNS}, ${TABLE_USERS}.user_name, ${TABLE_USERS}.first_name, ${TABLE_USERS}.last_name
+                 FROM ${TABLE_SCREENS}
+                 JOIN ${TABLE_USERS}
+                   ON user_id = ${TABLE_USERS}.id;`;
             console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
@@ -81,7 +81,7 @@ screens.route('')
             console.log(req.body);
             const { user_id, name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                `INSERT INTO screens
+                `INSERT INTO ${TABLE_SCREENS}
                     (user_id, name, description, size_x, size_y, thumbnail, public, created, last_saved)
                  VALUES
                     ('${user_id}', 
@@ -104,11 +104,11 @@ screens.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `SELECT ${SCREEN_COLUMNS}, users.user_name, users.first_name, users.last_name
-                 FROM screens
-                 JOIN users
-                   ON user_id = users.id
-                 WHERE screens.id = ${id};`;
+                `SELECT ${SCREEN_COLUMNS}, ${TABLE_USERS}.user_name, ${TABLE_USERS}.first_name, ${TABLE_USERS}.last_name
+                 FROM ${TABLE_SCREENS}
+                 JOIN ${TABLE_USERS}
+                   ON user_id = ${TABLE_USERS}.id
+                 WHERE ${TABLE_SCREENS}.id = ${id};`;
             console.log({ id, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
@@ -119,7 +119,7 @@ screens.route('/:id')
             const { id } = req.params;
             const { name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                'UPDATE screens SET ' +
+                `UPDATE ${TABLE_SCREENS} SET ` +
                 getParamQuery('name', name, isFirst = true) +
                 getParamQuery('description', description) +
                 getParamQuery('size_x', size_x) +
@@ -139,7 +139,7 @@ screens.route('/:id')
         tryCatch(req, res, async(req, res) => {
             const { id } = req.params;
             const queryStr =
-                `DELETE FROM screens 
+                `DELETE FROM ${TABLE_SCREENS} 
                  WHERE id = ${id};`
             console.log({ id, queryStr });
             res.status(StatusCodes.OK).json(await pool.query(queryStr));

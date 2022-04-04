@@ -1,16 +1,12 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
-const screensWidgets = express.Router();
-const { pool } = require("../db");
-const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
-
-const TABLE_NAME = 'screens_widgets';
-
-screensWidgets.use(express.json()); // => req.body
+const screenWidgets = express.Router();
+const { pool, TABLE_WIDGETS, TABLE_SCREENSWIDGETS } = require("../db");
+const { tryCatch } = require("../utils");
 
 const insertNewScreenWidget = async(screen_id, widget_id, x_pos, y_pos, size_x, size_y) => {
     const queryStr =
-        `INSERT INTO ${TABLE_NAME}
+        `INSERT INTO ${TABLE_SCREENSWIDGETS}
           (screen_id, widget_id, x_pos, y_pos, size_x, size_y) 
          VALUES
           (${screen_id},  ${widget_id},  ${x_pos}, ${y_pos},  ${size_x}, ${size_y})`;
@@ -20,26 +16,28 @@ const insertNewScreenWidget = async(screen_id, widget_id, x_pos, y_pos, size_x, 
 
 const deleteScreenWidgets = async(screenId) => {
     const queryStr =
-        `DELETE FROM ${TABLE_NAME}
+        `DELETE FROM ${TABLE_SCREENSWIDGETS}
          WHERE screen_id = ${screenId};`;
     console.log({ queryStr });
     return await pool.query(queryStr);
 }
 
+screenWidgets.use(express.json()); // => req.body
+
 // '/screenswidgets' Routes ------
 
-screensWidgets.route('/:screenId')
+screenWidgets.route('/:screenId')
     // get all widgets on the specified screen
     .get((req, res, next) => {
         tryCatch(req, res, async(req, res) => {
             const { screenId } = req.params;
             const queryStr =
-                `SELECT screen_id, widget_id, x_pos, y_pos, screens_widgets.size_x, screens_widgets.size_y, widgets.user_id, widgets.name, widgets.thumbnail, widgets.public
-                     FROM ${TABLE_NAME}
-                     JOIN widgets
-                       ON widget_id = widgets.id
+                `SELECT screen_id, widget_id, x_pos, y_pos, ${TABLE_SCREENSWIDGETS}.size_x, ${TABLE_SCREENSWIDGETS}.size_y, widgets.user_id, widgets.name, widgets.thumbnail, widgets.public
+                     FROM ${TABLE_SCREENSWIDGETS}
+                     JOIN ${TABLE_WIDGETS}
+                       ON widget_id = ${TABLE_WIDGETS}.id
                      WHERE screen_id = ${screenId}
-                     ORDER BY widgets.name;`;
+                     ORDER BY ${TABLE_WIDGETS}.name;`;
             console.log({ screenId, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
@@ -63,4 +61,4 @@ screensWidgets.route('/:screenId')
         });
     })
 
-module.exports = screensWidgets;
+module.exports = screenWidgets;

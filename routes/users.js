@@ -1,20 +1,20 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
-const users = express.Router({ mergeParams: true });
-const { pool, TABLE_USERS } = require("../db");
+const usersRouter = express.Router({ mergeParams: true });
+const { pool, TUSERS, TSCREENSWIDGETS } = require("../db");
 const { tryCatch, addParamQuery } = require("../utils");
 
-users.use(express.json()); // => req.body
+usersRouter.use(express.json()); // => req.body
 
 // '/users' Routes ------
 
-users.route('')
+usersRouter.route('')
     // get all users
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
                 `SELECT *
-                 FROM ${TABLE_USERS};`;
+                 FROM ${TUSERS};`;
             console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })
@@ -26,7 +26,7 @@ users.route('')
             console.log(req.body);
             const { user_name, first_name, last_name, email, pwd_hash, status, level, image } = req.body;
             const queryStr =
-                `INSERT INTO ${TABLE_USERS}
+                `INSERT INTO ${TUSERS}
                    (user_name, first_name, last_name, email, pwd_hash, created, status, level, image, see_public_widgets, see_public_screens)
                  VALUES
                    ('${user_name}', 
@@ -46,37 +46,37 @@ users.route('')
         })
     });
 
-users.route('/:id')
+usersRouter.route('/:userId')
     // get single user
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const { id } = req.params;
+            const { userId } = req.params;
             const queryStr =
                 `SELECT *
-                 FROM ${TABLE_USERS}
-                 WHERE id = ${id};`
-            console.log({ id, queryStr });
+                 FROM ${TUSERS}
+                 WHERE id = ${userId};`
+            console.log({ userId, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         });
     })
     // update user
     .put((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const { id } = req.params;
+            const { userId } = req.params;
             let queryStr = '';
             if (req.query.see_public_widgets) {
                 queryStr =
-                    `UPDATE ${TABLE_USERS} SET ` +
+                    `UPDATE ${TUSERS} SET ` +
                     addParamQuery('see_public_widgets', req.query, isFirst = true) +
-                    ` WHERE id = ${id};`
+                    ` WHERE id = ${userId};`
             } else if (req.query.see_public_screens) {
                 queryStr =
-                    `UPDATE ${TABLE_USERS} SET ` +
+                    `UPDATE ${TUSERS} SET ` +
                     addParamQuery('see_public_screens', req.query, isFirst = true) +
-                    ` WHERE id = ${id};`
+                    ` WHERE id = ${userId};`
             } else {
                 queryStr =
-                    `UPDATE ${TABLE_USERS} SET ` +
+                    `UPDATE ${TUSERS} SET ` +
                     addParamQuery('user_name', req.body, isFirst = true) +
                     addParamQuery('first_name', req.body) +
                     addParamQuery('last_name', req.body) +
@@ -87,28 +87,43 @@ users.route('/:id')
                     //addParamQuery('image', req.body) +     // TODO: handle data format of image
                     addParamQuery('see_public_widgets', req.body) +
                     addParamQuery('see_public_screens', req.body) +
-                    ` WHERE id = ${id};`
+                    ` WHERE id = ${userId};`
             }
-            console.log({ id, queryStr });
+            console.log({ userId, queryStr });
             res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
         })
     })
     // delete user
-    // todo: check if user has projects or vidgets => delete them too
     .delete((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const { id } = req.params;
-            const queryStr =
-                `DELETE FROM ${TABLE_USERS} 
-                 WHERE id = ${id};`
-            console.log({ id, queryStr });
+            const { userId } = req.params;
+
+            // delete screen-widgets assigned to the user
+            let queryStr =
+                `DELETE FROM ${TSCREENSWIDGETS} 
+                 WHERE user_id = ${userId};`
+            console.log({ userId, queryStr });
+            await pool.query(queryStr);
+
+            // delete all widgets of the user
+            queryStr =
+                `DELETE FROM ${TWIDGETS} 
+                 WHERE user_id = ${userId};`
+            console.log({ userId, queryStr });
+            await pool.query(queryStr);
+
+            // delete user itself
+            queryStr =
+                `DELETE FROM ${TUSERS} 
+                 WHERE id = ${userId};`
+            console.log({ userId, queryStr });
             const success = await pool.query(queryStr).rowCount > 0;
             res.status(success ? StatusCodes.OK : StatusCodes.NOT_FOUND)
                 .json({
-                    message: (success ? `User ${id} deleted` : `User ${id} not found`),
-                    user_id: id
+                    message: (success ? `User ${userId} deleted` : `User ${userId} not found`),
+                    user_id: userId
                 });
         })
     });
 
-module.exports = users;
+module.exports = { usersRouter };

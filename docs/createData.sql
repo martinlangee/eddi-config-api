@@ -28,11 +28,11 @@ VALUES
     (15, 'Car screen', 'Device in my car''s info screen', 800, 600, 'XXX', true, '2021-01-21', '2020-12-11');
 
 INSERT INTO
-    screens_widgets (screen_id, widget_id, x_pos, y_pos, size_x, size_y)
+    screens_widgets (screen_id, widget_id, user_id, x_pos, y_pos, size_x, size_y)
 VALUES
-    (5, 15, 10, 20, 30, 40),
-    (5, 16, 50, 60, 70, 80),
-    (5, 18, 90, 100, 110, 120),
-    (6, 19, 130, 140, 150, 160),
-    (6, 15, 170, 180, 190, 200);
+    (5, 15, 15, 10, 20, 30, 40),
+    (5, 15, 16, 50, 60, 70, 80),
+    (5, 15, 18, 90, 100, 110, 120),
+    (6, 15, 19, 130, 140, 150, 160),
+    (6, 16, 16, 170, 180, 190, 200);
 

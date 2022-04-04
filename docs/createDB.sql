@@ -64,6 +64,7 @@ CREATE TABLE screens (
 CREATE TABLE screen_widgets (
   screen_id INT,
   widget_id INT,
+  user_id INT,
   x_pos INT,
   y_pos INT,
   size_x INT NOT NULL,

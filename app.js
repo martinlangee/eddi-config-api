@@ -3,10 +3,10 @@ const express = require("express");
 var cors = require('cors');
 const app = express();
 
-const usersRouter = require("./routes/users");
-const widgetsRouter = require("./routes/widgets");
-const screensRouter = require("./routes/screens");
-const screenWidgetsRouter = require("./routes/screenWidgets");
+const { usersRouter } = require("./routes/users");
+const { widgetsRouter } = require("./routes/widgets");
+const { screensRouter } = require("./routes/screens");
+const { screenWidgetsRouter } = require("./routes/screenWidgets");
 
 app.use(cors());
 

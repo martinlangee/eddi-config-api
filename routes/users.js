@@ -39,7 +39,8 @@ users.route('')
                     '${status}',
                     'NULL'         
                     'false',
-                    'false');`; // TODO: save image data (from Base64?)
+                    'false')
+                 RETURNING id;`; // TODO: save image data (from Base64?)
             console.log({ queryStr });
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })

@@ -78,7 +78,8 @@ widgets.route('')
                     '${public}', 
                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})
-                   );`;
+                   )
+                   RETURNING id;`;
             console.log({ queryStr });
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })

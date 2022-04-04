@@ -38,7 +38,8 @@ screensWidgets.route('/:screenId')
                      FROM ${TABLE_NAME}
                      JOIN widgets
                        ON widget_id = widgets.id
-                     WHERE screen_id = ${screenId};`;
+                     WHERE screen_id = ${screenId}
+                     ORDER BY widgets.name;`;
             console.log({ screenId, queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
         })

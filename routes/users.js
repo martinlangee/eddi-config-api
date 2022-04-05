@@ -1,12 +1,15 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
+var bcrypt = require("bcryptjs");
+var jwt = require("jsonwebtoken");
+const { pool, TUSERS, TSCREENSWIDGETS, dbCheckDuplicateUsernameOrEmail, dbCreateUser, dbFindUserByEmail } = require("../db");
+const { tryCatch, addParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
+
 const usersRouter = express.Router({ mergeParams: true });
-const { pool, TUSERS, TSCREENSWIDGETS } = require("../db");
-const { tryCatch, addParamQuery } = require("../utils");
 
 usersRouter.use(express.json()); // => req.body
 
-// '/users' Routes ------
+// '/user' Routes ------
 
 usersRouter.route('')
     // get all users
@@ -20,7 +23,6 @@ usersRouter.route('')
         })
     })
     // create user
-    // TODO: check if user_name or email already present => send error
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
             console.log(req.body);
@@ -34,7 +36,7 @@ usersRouter.route('')
                     '${last_name}', 
                     '${email}',
                     '${pwd_hash}', 
-                    to_timestamp(${Date.now()} / 1000), 
+                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
                     '${status}',
                     '${status}',
                     'NULL'         
@@ -42,6 +44,7 @@ usersRouter.route('')
                     'false')
                  RETURNING id;`; // TODO: save image data (from Base64?)
             console.log({ queryStr });
+            // TODO: check query result => send error
             res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
         })
     });
@@ -119,10 +122,53 @@ usersRouter.route('/:userId')
             console.log({ userId, queryStr });
             const success = await pool.query(queryStr).rowCount > 0;
             res.status(success ? StatusCodes.OK : StatusCodes.NOT_FOUND)
-                .json({
+                .send({
                     message: (success ? `User ${userId} deleted` : `User ${userId} not found`),
                     user_id: userId
                 });
+        })
+    });
+
+usersRouter.route('/signup')
+    .post((req, res) => {
+        tryCatch(req, res, async(req, res) => {
+            const { user_name, email, pwd } = req.body;
+            // first check for duplicate user data
+            const resp = await dbCheckDuplicateUsernameOrEmail(user_name, email);
+            if (resp.result) {
+                // then create new user with the specified data
+                return res.status(resp.status).send(await dbCreateUser(user_name, email, bcrypt.hashSync(pwd, 8)));
+            } else {
+                res.status(resp.status).send(resp);
+            }
+        })
+    });
+
+usersRouter.route('/login')
+    .post((req, res) => {
+        tryCatch(req, res, async(req, res) => {
+            const { email, pwd_hash } = req.body;
+            // find user Email
+            const user = await dbFindUserByEmail(email);
+            console.log(user);
+            if (!user.result) {
+                return res.status(user.status).send(user);
+            }
+            // verify password hash
+            var pwdValid = bcrypt.compareSync(
+                pwd_hash,
+                user.pwd_hash
+            );
+
+            if (!pwdValid) {
+                return res.status(StatusCodes.UNAUTHORIZED).send({ accessToken: null, message: "Invalid password" });
+            }
+
+            var token = jwt.sign({ id: user.id }, db.SECRET, {
+                expiresIn: 86400 // 24 hours
+            });
+
+            res.status(StatusCodes.ACCEPTED).send({ id: user.id, level: user.level, accessToken: token });
         })
     });
 

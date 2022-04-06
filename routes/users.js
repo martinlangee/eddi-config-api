@@ -132,12 +132,12 @@ usersRouter.route('/:userId')
 usersRouter.route('/signup')
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const { user_name, email, pwd } = req.body;
+            const { username, email, password } = req.body;
             // first check for duplicate user data
-            const resp = await dbCheckDuplicateUsernameOrEmail(user_name, email);
+            const resp = await dbCheckDuplicateUsernameOrEmail(username, email);
             if (resp.result) {
                 // then create new user with the specified data
-                return res.status(resp.status).send(await dbCreateUser(user_name, email, bcrypt.hashSync(pwd, 8)));
+                return res.status(resp.status).send(await dbCreateUser(username, email, bcrypt.hashSync(password, 8)));
             } else {
                 res.status(resp.status).send(resp);
             }
@@ -160,11 +160,6 @@ usersRouter.route('/login')
                 password,
                 user.pwd_hash
             );
-
-            // TODO: check of old unhashed passwords -> remove this later ################################
-            if (!pwdValid) {
-                pwdValid = password === user.pwd_hash;
-            }
 
             if (!pwdValid) {
                 return res.status(StatusCodes.UNAUTHORIZED).send({ accessToken: null, message: "Invalid password" });

@@ -43,10 +43,10 @@ const dbCheckDuplicateUsernameOrEmail = async(username, email) => {
     console.log({ queryStr });
     const users = (await pool.query(queryStr)).rows;
 
-    if (users.find(user => user.user_name === username))
+    if (users && users.find(user => user.user_name === username))
         return { result: false, message: "Failed! User name already in use.", status: StatusCodes.BAD_REQUEST };
 
-    if (users.find(user => user.email === email))
+    if (users && users.find(user => user.email === email))
         return { result: false, message: "Failed! E-mail already in use.", status: StatusCodes.BAD_REQUEST };
 
     return { result: true, message: "OK", status: StatusCodes.OK };
@@ -55,11 +55,12 @@ const dbCheckDuplicateUsernameOrEmail = async(username, email) => {
 const dbCreateUser = async(username, email, pwdhash) => {
     const queryStr =
         `INSERT INTO ${TUSERS}
-           (user_name, email, pwd_hash, created)
+           (user_name, email, pwd_hash, status, created)
          VALUES
            ('${username}', 
             '${email}',
             '${pwdhash}', 
+            'active',
             to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}))
             RETURNING id;`;
     console.log({ queryStr });

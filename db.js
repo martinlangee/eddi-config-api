@@ -44,10 +44,10 @@ const dbCheckDuplicateUsernameOrEmail = async(username, email) => {
     const users = (await pool.query(queryStr)).rows;
 
     if (users && users.find(user => user.user_name === username))
-        return { result: false, message: "Failed! User name already in use.", status: StatusCodes.BAD_REQUEST };
+        return { result: false, message: "Failed: User name already assigned.", status: StatusCodes.BAD_REQUEST };
 
     if (users && users.find(user => user.email === email))
-        return { result: false, message: "Failed! E-mail already in use.", status: StatusCodes.BAD_REQUEST };
+        return { result: false, message: "Failed: E-mail already assigned.", status: StatusCodes.BAD_REQUEST };
 
     return { result: true, message: "OK", status: StatusCodes.OK };
 }
@@ -77,7 +77,7 @@ const dbFindUserByEmail = async(email) => {
     if (users && users.length) {
         return {...users[0], result: true };
     } else {
-        return { result: false, message: "User E-mail not found", status: StatusCodes.NOT_FOUND }
+        return { result: false, message: "Failed: No account for this E-mail found", status: StatusCodes.NOT_FOUND }
     }
 }
 

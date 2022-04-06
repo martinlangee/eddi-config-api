@@ -68,12 +68,12 @@ const dbCreateUser = async(username, email, pwdhash) => {
 
 const dbFindUserByEmail = async(email) => {
     const queryStr =
-        `SELECT id, email, pwd_hash, level, status
+        `SELECT id, user_name, email, pwd_hash, level, status
          FROM users
          WHERE email = '${email}' AND status = 'active';`;
     console.log({ queryStr });
     const users = (await pool.query(queryStr)).rows;
-    if (users) {
+    if (users && users.length) {
         return {...users[0], result: true };
     } else {
         return { result: false, message: "User E-mail not found", status: StatusCodes.NOT_FOUND }

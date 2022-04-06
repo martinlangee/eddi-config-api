@@ -26,6 +26,7 @@ const checkUser = (req, res, next) => {
     console.log('checkUser');
     const token = req.cookies.jwt;
     if (token) {
+        console.log('checkUser - token:', token);
         jwt.verify(token, db.SECRET, async(err, decodedToken) => {
             console.log('checkUser - err:', err);
             if (err) {
@@ -38,6 +39,7 @@ const checkUser = (req, res, next) => {
             }
         });
     } else {
+        console.log('checkUser - reset user');
         res.locals.user = null;
         next();
     }

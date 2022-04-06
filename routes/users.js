@@ -2,7 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
-const { pool, TUSERS, TSCREENSWIDGETS, dbCheckDuplicateUsernameOrEmail, dbCreateUser, dbFindUserByEmail } = require("../db");
+const { pool, TUSERS, TSCREENSWIDGETS, SECRET, dbCheckDuplicateUsernameOrEmail, dbCreateUser, dbFindUserByEmail } = require("../db");
 const { tryCatch, addParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
 
 const usersRouter = express.Router({ mergeParams: true });
@@ -147,7 +147,8 @@ usersRouter.route('/signup')
 usersRouter.route('/login')
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const { email, pwd_hash } = req.body;
+            console.log(req.body);
+            const { email, password } = req.body;
             // find user Email
             const user = await dbFindUserByEmail(email);
             console.log(user);
@@ -156,19 +157,24 @@ usersRouter.route('/login')
             }
             // verify password hash
             var pwdValid = bcrypt.compareSync(
-                pwd_hash,
+                password,
                 user.pwd_hash
             );
+
+            // TODO: check of old unhashed passwords -> remove this later ################################
+            if (!pwdValid) {
+                pwdValid = password === user.pwd_hash;
+            }
 
             if (!pwdValid) {
                 return res.status(StatusCodes.UNAUTHORIZED).send({ accessToken: null, message: "Invalid password" });
             }
 
-            var token = jwt.sign({ id: user.id }, db.SECRET, {
+            var token = jwt.sign({ id: user.id }, SECRET, {
                 expiresIn: 86400 // 24 hours
             });
 
-            res.status(StatusCodes.ACCEPTED).send({ id: user.id, level: user.level, accessToken: token });
+            res.status(StatusCodes.ACCEPTED).send({ id: user.id, username: user.user_name, level: user.level, accessToken: token });
         })
     });
 

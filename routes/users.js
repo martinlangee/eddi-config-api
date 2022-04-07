@@ -2,8 +2,8 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
-const { pool, TUSERS, TSCREENSWIDGETS, SECRET, dbCheckDuplicateUsernameOrEmail, dbCreateUser, dbFindUserByEmail } = require("../db");
-const { tryCatch, addParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
+const { pool, TUSERS, TSCREENSWIDGETS, SECRET, dbCheckDuplicateUsername, dbCheckDuplicateEmail, dbInsertUser, dbFindUserByEmail } = require("../db");
+const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT } = require("../utils");
 
 const usersRouter = express.Router({ mergeParams: true });
 
@@ -26,16 +26,16 @@ usersRouter.route('')
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
             console.log(req.body);
-            const { user_name, first_name, last_name, email, pwd_hash, status, level, image } = req.body;
+            const { user_name, first_name, last_name, email, password, status, level, image } = req.body;
             const queryStr =
                 `INSERT INTO ${TUSERS}
-                   (user_name, first_name, last_name, email, pwd_hash, created, status, level, image, see_public_widgets, see_public_screens)
+                   (user_name, first_name, last_name, email, password, created, status, level, image, see_public_widgets, see_public_screens)
                  VALUES
                    ('${user_name}', 
                     '${first_name}', 
                     '${last_name}', 
                     '${email}',
-                    '${pwd_hash}', 
+                    '${password}', 
                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
                     '${status}',
                     '${status}',
@@ -67,6 +67,7 @@ usersRouter.route('/:userId')
         tryCatch(req, res, async(req, res) => {
             const { userId } = req.params;
             let queryStr = '';
+            let successMessage = "";
             if (req.query.see_public_widgets) {
                 queryStr =
                     `UPDATE ${TUSERS} SET ` +
@@ -78,22 +79,38 @@ usersRouter.route('/:userId')
                     addParamQuery('see_public_screens', req.query, isFirst = true) +
                     ` WHERE id = ${userId};`
             } else {
+                // check duplicates where unique data are required (user_name and email)
+                let { dbField, value } = req.body;
+                if (dbField === 'user_name') {
+                    const resp = await dbCheckDuplicateUsername(userId, value);
+                    if (!resp.result) {
+                        console.log(resp);
+                        return res.send(resp);
+                    }
+                }
+                if (dbField === 'email') {
+                    const resp = await dbCheckDuplicateEmail(userId, email);
+                    if (!resp.result)
+                        return res.send(resp);
+                }
+                // hash the password before it is written
+                if (dbField === 'password') {
+                    value = bcrypt.hashSync(value, 8)
+                    successMessage = "Password changed";
+                }
+                // query other data fields
                 queryStr =
                     `UPDATE ${TUSERS} SET ` +
-                    addParamQuery('user_name', req.body, isFirst = true) +
-                    addParamQuery('first_name', req.body) +
-                    addParamQuery('last_name', req.body) +
-                    addParamQuery('email', req.body) +
-                    addParamQuery('pwd_hash', req.body) +
-                    addParamQuery('status', req.body) +
-                    addParamQuery('level', req.body) +
-                    //addParamQuery('image', req.body) +     // TODO: handle data format of image
-                    addParamQuery('see_public_widgets', req.body) +
-                    addParamQuery('see_public_screens', req.body) +
+                    getParamQuery(dbField, value, isFirst = true) +
                     ` WHERE id = ${userId};`
             }
-            console.log({ userId, queryStr });
-            res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
+            console.log(req.body, { userId, queryStr });
+            const resp = await pool.query(queryStr);
+            if (resp.rowCount === 1) {
+                return res.send({ result: true, message: successMessage || `Parameter ${dbField} changed`, status: StatusCodes.ACCEPTED });
+            } else {
+                return res.send({ result: false, message: `Failed: ${dbField} could not be changed`, status: StatusCodes.BAD_REQUEST });
+            }
         })
     })
     // delete user
@@ -133,14 +150,16 @@ usersRouter.route('/signup')
     .post((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { username, email, password } = req.body;
-            // first check for duplicate user data
-            const resp = await dbCheckDuplicateUsernameOrEmail(username, email);
-            if (resp.result) {
-                // then create new user with the specified data
-                return res.status(resp.status).send(await dbCreateUser(username, email, bcrypt.hashSync(password, 8)));
-            } else {
+            // first check for duplicate username
+            let resp = await dbCheckDuplicateUsername(-1, username);
+            if (!resp.result)
                 res.status(resp.status).send(resp);
-            }
+            // then check for duplicate E-mail
+            resp = await dbCheckDuplicateEmail(-1, email);
+            if (!resp.result)
+                res.status(resp.status).send(resp);
+            // if unique register new user with the specified data
+            return res.status(resp.status).send(await dbInsertUser(username, email, bcrypt.hashSync(password, 8)));
         })
     });
 
@@ -149,7 +168,7 @@ usersRouter.route('/login')
         tryCatch(req, res, async(req, res) => {
             console.log(req.body);
             const { email, password } = req.body;
-            // find user Email
+            // find user by E-mail
             const user = await dbFindUserByEmail(email);
             console.log(user);
             if (!user.result) {
@@ -158,7 +177,7 @@ usersRouter.route('/login')
             // verify password hash
             var pwdValid = bcrypt.compareSync(
                 password,
-                user.pwd_hash
+                user.password
             );
 
             if (!pwdValid) {

@@ -36,15 +36,29 @@ const dbGetSeePublicScreens = async(userId) => {
     return row;
 }
 
-const dbCheckDuplicateUsernameOrEmail = async(username, email) => {
+const dbCheckDuplicateUsername = async(userId, username) => {
     const queryStr =
         `SELECT user_name, email
-         FROM users`;
+         FROM users
+         WHERE id <> ${userId}`;
     console.log({ queryStr });
     const users = (await pool.query(queryStr)).rows;
 
-    if (users && users.find(user => user.user_name === username))
+
+    if (users && users.find(user => user.user_name === username)) {
         return { result: false, message: "Failed: User name already assigned.", status: StatusCodes.BAD_REQUEST };
+    }
+
+    return { result: true, message: "OK", status: StatusCodes.OK };
+}
+
+const dbCheckDuplicateEmail = async(userId, email) => {
+    const queryStr =
+        `SELECT user_name, email
+         FROM users
+         WHERE id <> ${userId}`;
+    console.log("Check email", { queryStr });
+    const users = (await pool.query(queryStr)).rows;
 
     if (users && users.find(user => user.email === email))
         return { result: false, message: "Failed: E-mail already assigned.", status: StatusCodes.BAD_REQUEST };
@@ -52,10 +66,10 @@ const dbCheckDuplicateUsernameOrEmail = async(username, email) => {
     return { result: true, message: "OK", status: StatusCodes.OK };
 }
 
-const dbCreateUser = async(username, email, pwdhash) => {
+const dbInsertUser = async(username, email, pwdhash) => {
     const queryStr =
         `INSERT INTO ${TUSERS}
-           (user_name, email, pwd_hash, status, created)
+           (user_name, email, password, status, created)
          VALUES
            ('${username}', 
             '${email}',
@@ -64,12 +78,12 @@ const dbCreateUser = async(username, email, pwdhash) => {
             to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}))
             RETURNING id;`;
     console.log({ queryStr });
-    return { "id": (await pool.query(queryStr)).rows[0].id, "pwd_hash": pwdhash };
+    return { "id": (await pool.query(queryStr)).rows[0].id, "password": pwdhash };
 }
 
 const dbFindUserByEmail = async(email) => {
     const queryStr =
-        `SELECT id, user_name, email, pwd_hash, level, status
+        `SELECT id, user_name, email, password, level, status
          FROM users
          WHERE email = '${email}' AND status = 'active';`;
     console.log({ queryStr });
@@ -106,8 +120,9 @@ module.exports = {
     TSCREENSWIDGETS,
     dbGetSeePublicWidgets,
     dbGetSeePublicScreens,
-    dbCheckDuplicateUsernameOrEmail,
-    dbCreateUser,
+    dbCheckDuplicateUsername,
+    dbCheckDuplicateEmail,
+    dbInsertUser,
     dbFindUserByEmail,
     dbFindUserById
 };

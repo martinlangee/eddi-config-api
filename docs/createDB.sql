@@ -17,7 +17,7 @@ CREATE TABLE users (
   last_name varchar,
   email varchar UNIQUE NOT NULL,
   showPublicScreens BOOLEAN,
-  pwd_hash varchar NOT NULL,
+  password varchar NOT NULL,
   created TIMESTAMP,
   status varchar(10),
   level INT,

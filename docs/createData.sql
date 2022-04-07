@@ -1,5 +1,5 @@
 INSERT INTO 
-    users (user_name, first_name, last_name, email, pwd_hash, created, status, level, see_public_screens, see_public_widgets)
+    users (user_name, first_name, last_name, email, password, created, status, level, see_public_screens, see_public_widgets)
 VALUES
     ('martin', 'Martin', 'Lange', 'ml@abcde.fr', 'XXXX', '2020-12-11', 'active', 9, true, true),
     ('alex', 'Alex', 'Schmidt', 'as@ddddd.der', 'XXXX', '2020-11-10', 'active', 0, true, true),

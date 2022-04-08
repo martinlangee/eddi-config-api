@@ -1,25 +1,25 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screenWidgetsRouter = express.Router();
-const { pool, TWIDGETS, TSCREENSWIDGETS } = require("../db");
+const Db = require("../db");
 const { tryCatch } = require("../utils");
 
 const insertNewScreenWidget = async(screen_id, widget_id, user_id, x_pos, y_pos, size_x, size_y) => {
     const queryStr =
-        `INSERT INTO ${TSCREENSWIDGETS}
+        `INSERT INTO ${Db.TSCREENSWIDGETS}
           (screen_id, widget_id, user_id, x_pos, y_pos, size_x, size_y) 
          VALUES
           (${screen_id}, ${widget_id}, ${user_id}, ${x_pos}, ${y_pos},  ${size_x}, ${size_y})`;
     console.log('INSERT', { screen_id, queryStr });
-    return await pool.query(queryStr);
+    return await Db.pool.query(queryStr);
 }
 
 const deleteScreenWidgets = async(screenId) => {
     const queryStr =
-        `DELETE FROM ${TSCREENSWIDGETS}
+        `DELETE FROM ${Db.TSCREENSWIDGETS}
          WHERE screen_id = ${screenId};`;
     console.log({ screenId, queryStr });
-    return await pool.query(queryStr);
+    return await Db.pool.query(queryStr);
 }
 
 screenWidgetsRouter.use(express.json()); // => req.body
@@ -32,14 +32,14 @@ screenWidgetsRouter.route('/:screenId')
         tryCatch(req, res, async(req, res) => {
             const { screenId } = req.params;
             const queryStr =
-                `SELECT screen_id, widget_id, x_pos, y_pos, ${TSCREENSWIDGETS}.size_x, ${TSCREENSWIDGETS}.size_y, ${TWIDGETS}.user_id as user_id, ${TWIDGETS}.name, ${TWIDGETS}.thumbnail, ${TWIDGETS}.public
-                     FROM ${TSCREENSWIDGETS}
-                     JOIN ${TWIDGETS}
-                       ON widget_id = ${TWIDGETS}.id
+                `SELECT screen_id, widget_id, x_pos, y_pos, ${Db.TSCREENSWIDGETS}.size_x, ${Db.TSCREENSWIDGETS}.size_y, ${Db.TWIDGETS}.user_id as user_id, ${Db.TWIDGETS}.name, ${Db.TWIDGETS}.thumbnail, ${Db.TWIDGETS}.public
+                     FROM ${Db.TSCREENSWIDGETS}
+                     JOIN ${Db.TWIDGETS}
+                       ON widget_id = ${Db.TWIDGETS}.id
                      WHERE screen_id = ${screenId}
-                     ORDER BY ${TWIDGETS}.name;`;
+                     ORDER BY ${Db.TWIDGETS}.name;`;
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
         })
     })
     // set new screen-widgets on screen of '/<screenId>'

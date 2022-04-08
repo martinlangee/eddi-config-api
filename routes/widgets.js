@@ -1,24 +1,24 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const widgetsRouter = express.Router();
-const { pool, TUSERS, TWIDGETS, dbGetSeePublicWidgets, TSCREENSWIDGETS } = require("../db");
-const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
+const Db = require("../db");
+const { tryCatch } = require("../utils");
 
 
 widgetsRouter.use(express.json()); // => req.body
 
 // '/widgets' Routes ------
 
-const WIDGET_COLUMNS = `${TWIDGETS}.id, 
-                        ${TWIDGETS}.name, 
-                        ${TWIDGETS}.description, 
-                        ${TWIDGETS}.size_x, 
-                        ${TWIDGETS}.size_y, 
-                        ${TWIDGETS}.thumbnail, 
-                        ${TWIDGETS}.public, 
-                        to_char(${TWIDGETS}.created, ${DATETIME_DISPLAY_FORMAT}) as created, 
-                        to_char(${TWIDGETS}.last_saved, ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
-                        ${TWIDGETS}.user_id`;
+const WIDGET_COLUMNS = `${Db.TWIDGETS}.id, 
+                        ${Db.TWIDGETS}.name, 
+                        ${Db.TWIDGETS}.description, 
+                        ${Db.TWIDGETS}.size_x, 
+                        ${Db.TWIDGETS}.size_y, 
+                        ${Db.TWIDGETS}.thumbnail, 
+                        ${Db.TWIDGETS}.public, 
+                        to_char(${Db.TWIDGETS}.created, ${Db.DATETIME_DISPLAY_FORMAT}) as created, 
+                        to_char(${Db.TWIDGETS}.last_saved, ${Db.DATETIME_DISPLAY_FORMAT}) as last_saved, 
+                        ${Db.TWIDGETS}.user_id`;
 
 widgetsRouter.route('')
     // get widgets:
@@ -30,16 +30,16 @@ widgetsRouter.route('')
         if (req.query.userId) {
             tryCatch(req, res, async(req, res) => {
                 const userId = req.query.userId;
-                const seePublic = await dbGetSeePublicWidgets(userId);
-                const querySeePublic = seePublic ? ` OR ${TUSERS}.see_public_widgets = true` : '';
+                const seePublic = await Db.getSeePublicWidgets(userId);
+                const querySeePublic = seePublic ? ` OR ${Db.TUSERS}.see_public_widgets = true` : '';
                 const queryStr =
-                    `SELECT ${WIDGET_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                     FROM ${TWIDGETS}
-                     JOIN ${TUSERS}
-                       ON user_id = ${TUSERS}.id
+                    `SELECT ${WIDGET_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                     FROM ${Db.TWIDGETS}
+                     JOIN ${Db.TUSERS}
+                       ON user_id = ${Db.TUSERS}.id
                      WHERE user_id = ${userId}${querySeePublic};`;
                 console.log({ userId, seePublic, queryStr });
-                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+                res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
             })
         } else {
             next();
@@ -49,15 +49,15 @@ widgetsRouter.route('')
     // TODO: private widgets should only be visible for admin!
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
-            const queryOnlyPublic = req.query.public === 'true' ? ` WHERE ${TUSERS}.see_public_widgets = true` : '';
+            const queryOnlyPublic = req.query.public === 'true' ? ` WHERE ${Db.TUSERS}.see_public_widgets = true` : '';
             const queryStr =
-                `SELECT ${WIDGET_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                 FROM ${TWIDGETS}
-                 JOIN ${TUSERS}
-                   ON user_id = ${TUSERS}.id
+                `SELECT ${WIDGET_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                 FROM ${Db.TWIDGETS}
+                 JOIN ${Db.TUSERS}
+                   ON user_id = ${Db.TUSERS}.id
                    ${queryOnlyPublic};`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
         })
     })
     // create widget
@@ -66,7 +66,7 @@ widgetsRouter.route('')
             console.log(req.body);
             const { user_id, name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                `INSERT INTO ${TWIDGETS}
+                `INSERT INTO ${Db.TWIDGETS}
                    (user_id, name, description, size_x, size_y, thumbnail, content, public, created, last_saved)
                  VALUES
                    ('${user_id}', 
@@ -77,12 +77,12 @@ widgetsRouter.route('')
                     '${thumbnail}', 
                     '${content}', 
                     '${public}', 
-                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
-                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})
+                    to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT}),     
+                    to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})
                    )
                    RETURNING id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pool.query(queryStr));
         })
     });
 
@@ -92,13 +92,13 @@ widgetsRouter.route('/:widgetId')
         tryCatch(req, res, async(req, res) => {
             const { widgetId } = req.params;
             const queryStr =
-                `SELECT ${WIDGET_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                 FROM ${TWIDGETS}
-                 JOIN ${TUSERS}
-                   ON user_id = ${TUSERS}.id
-                 WHERE ${TWIDGETS}.id = ${widgetId};`;
+                `SELECT ${WIDGET_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                 FROM ${Db.TWIDGETS}
+                 JOIN ${Db.TUSERS}
+                   ON user_id = ${Db.TUSERS}.id
+                 WHERE ${Db.TWIDGETS}.id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
         })
     })
     // update widget
@@ -107,7 +107,7 @@ widgetsRouter.route('/:widgetId')
             const { widgetId } = req.params;
             const { name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                `UPDATE ${TWIDGETS} SET ` +
+                `UPDATE ${Db.TWIDGETS} SET ` +
                 getParamQuery('name', name, isFirst = true) +
                 getParamQuery('description', description) +
                 getParamQuery('size_x', size_x) +
@@ -115,10 +115,10 @@ widgetsRouter.route('/:widgetId')
                 getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
-                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
+                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${widgetId};`
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await Db.pool.query(queryStr));
         })
     })
     // delete widget
@@ -128,17 +128,17 @@ widgetsRouter.route('/:widgetId')
 
             // delete widget from all screens it is used on
             let queryStr =
-                `DELETE FROM ${TSCREENSWIDGETS} 
+                `DELETE FROM ${Db.TSCREENSWIDGETS} 
                  WHERE widget_id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            await pool.query(queryStr);
+            await Db.pool.query(queryStr);
 
             // delete widget itself
             queryStr =
-                `DELETE FROM ${TWIDGETS} 
+                `DELETE FROM ${Db.TWIDGETS} 
                  WHERE id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.OK).json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json(await Db.pool.query(queryStr));
         })
     });
 

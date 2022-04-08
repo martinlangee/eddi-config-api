@@ -2,6 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const bodyParser = require("body-parser");
 var cors = require('cors');
+
 const app = express();
 
 const { checkUser } = require("./middleware/authMiddleware");

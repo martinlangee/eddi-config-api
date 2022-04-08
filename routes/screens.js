@@ -1,24 +1,24 @@
 const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const screensRouter = express.Router();
-const { pool, TUSERS, TSCREENS, dbGetSeePublicScreens } = require("../db");
-const { tryCatch, getParamQuery, DATETIME_DISPLAY_FORMAT, formatDateTime } = require("../utils");
+const Db = require("../db");
+const { tryCatch } = require("../utils");
 const { deleteScreenWidgets } = require("./screenWidgets");
 
 screensRouter.use(express.json()); // => req.body
 
 // '/screens' Routes ------
 
-const SCREEN_COLUMNS = `${TSCREENS}.id, 
-                        ${TSCREENS}.name, 
-                        ${TSCREENS}.description, 
-                        ${TSCREENS}.size_x, 
-                        ${TSCREENS}.size_y, 
-                        ${TSCREENS}.thumbnail, 
-                        ${TSCREENS}.public, 
-                        to_char(${TSCREENS}.created,  ${DATETIME_DISPLAY_FORMAT}) as created, 
-                        to_char(${TSCREENS}.last_saved,  ${DATETIME_DISPLAY_FORMAT}) as last_saved, 
-                        ${TSCREENS}.user_id`;
+const SCREEN_COLUMNS = `${Db.TSCREENS}.id, 
+                        ${Db.TSCREENS}.name, 
+                        ${Db.TSCREENS}.description, 
+                        ${Db.TSCREENS}.size_x, 
+                        ${Db.TSCREENS}.size_y, 
+                        ${Db.TSCREENS}.thumbnail, 
+                        ${Db.TSCREENS}.public, 
+                        to_char(${Db.TSCREENS}.created,  ${Db.DATETIME_DISPLAY_FORMAT}) as created, 
+                        to_char(${Db.TSCREENS}.last_saved,  ${Db.DATETIME_DISPLAY_FORMAT}) as last_saved, 
+                        ${Db.TSCREENS}.user_id`;
 
 screensRouter.route('')
     // get screens:
@@ -29,16 +29,16 @@ screensRouter.route('')
         if (req.query.userId) {
             tryCatch(req, res, async(req, res) => {
                 const userId = req.query.userId;
-                const seePublic = await dbGetSeePublicScreens(userId);
-                const querySeePublic = seePublic ? ` OR ${TUSERS}.see_public_screens = true` : '';
+                const seePublic = await Db.getSeePublicScreens(userId);
+                const querySeePublic = seePublic ? ` OR ${Db.TUSERS}.see_public_screens = true` : '';
                 const queryStr =
-                    `SELECT ${SCREEN_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                     FROM ${TSCREENS}
-                     JOIN ${TUSERS}
-                       ON user_id = ${TUSERS}.id
+                    `SELECT ${SCREEN_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                     FROM ${Db.TSCREENS}
+                     JOIN ${Db.TUSERS}
+                       ON user_id = ${Db.TUSERS}.id
                      WHERE user_id = ${userId}${querySeePublic};`;
                 console.log({ userId, seePublic, queryStr });
-                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+                res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
             })
         } else {
             next();
@@ -50,15 +50,15 @@ screensRouter.route('')
             widgetId = req.query.widgetId;
             tryCatch(req, res, async(req, res) => {
                 const queryStr =
-                    `SELECT ${TSCREENS}.id as screen_id, ${TSCREENS}.user_id, ${TSCREENS}.name, ${TSCREENS}.description, ${TSCREENS}.public
+                    `SELECT ${Db.TSCREENS}.id as screen_id, ${Db.TSCREENS}.user_id, ${Db.TSCREENS}.name, ${Db.TSCREENS}.description, ${Db.TSCREENS}.public
                      FROM widgets
                      JOIN screens_widgets
                        ON widgets.id = widget_id
-                     JOIN ${TSCREENS}
-                       ON ${TSCREENS}.id = screen_id
+                     JOIN ${Db.TSCREENS}
+                       ON ${Db.TSCREENS}.id = screen_id
                      WHERE widgets.id = ${widgetId}`;
                 console.log({ widgetId, queryStr });
-                res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+                res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
             })
         } else {
             next();
@@ -69,12 +69,12 @@ screensRouter.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT ${SCREEN_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                 FROM ${TSCREENS}
-                 JOIN ${TUSERS}
-                   ON user_id = ${TUSERS}.id;`;
+                `SELECT ${SCREEN_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                 FROM ${Db.TSCREENS}
+                 JOIN ${Db.TUSERS}
+                   ON user_id = ${Db.TUSERS}.id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
         })
     })
     // create screen
@@ -83,7 +83,7 @@ screensRouter.route('')
             console.log(req.body);
             const { user_id, name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                `INSERT INTO ${TSCREENS}
+                `INSERT INTO ${Db.TSCREENS}
                     (user_id, name, description, size_x, size_y, thumbnail, public, created, last_saved)
                  VALUES
                     ('${user_id}', 
@@ -93,12 +93,12 @@ screensRouter.route('')
                      '${size_y}', 
                      '${thumbnail}', 
                      '${public}',
-                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),     
-                     to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})
+                     to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT}),     
+                     to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})
                     )
                  RETURNING id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.CREATED).json(await pool.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pool.query(queryStr));
         })
     });
 
@@ -109,13 +109,13 @@ screensRouter.route('/:screenId')
         tryCatch(req, res, async(req, res) => {
             const { screenId } = req.params;
             const queryStr =
-                `SELECT ${SCREEN_COLUMNS}, ${TUSERS}.user_name, ${TUSERS}.first_name, ${TUSERS}.last_name
-                 FROM ${TSCREENS}
-                 JOIN ${TUSERS}
-                   ON user_id = ${TUSERS}.id
-                 WHERE ${TSCREENS}.id = ${screenId};`;
+                `SELECT ${SCREEN_COLUMNS}, ${Db.TUSERS}.user_name, ${Db.TUSERS}.first_name, ${Db.TUSERS}.last_name
+                 FROM ${Db.TSCREENS}
+                 JOIN ${Db.TUSERS}
+                   ON user_id = ${Db.TUSERS}.id
+                 WHERE ${Db.TSCREENS}.id = ${screenId};`;
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
         })
     })
     // update screen
@@ -124,7 +124,7 @@ screensRouter.route('/:screenId')
             const { screenId } = req.params;
             const { name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
-                `UPDATE ${TSCREENS} SET ` +
+                `UPDATE ${Db.TSCREENS} SET ` +
                 getParamQuery('name', name, isFirst = true) +
                 getParamQuery('description', description) +
                 getParamQuery('size_x', size_x) +
@@ -132,10 +132,10 @@ screensRouter.route('/:screenId')
                 getParamQuery('thumbnail', thumbnail) +
                 getParamQuery('content', content) +
                 getParamQuery('public', public) +
-                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT})`, false, false) +
+                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${screenId};`
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.ACCEPTED).json(await pool.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await Db.pool.query(queryStr));
         })
     })
     // delete screen
@@ -147,10 +147,10 @@ screensRouter.route('/:screenId')
 
             // delete screen itself
             const queryStr =
-                `DELETE FROM ${TSCREENS} 
+                `DELETE FROM ${Db.TSCREENS} 
                  WHERE id = ${screenId};`
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json(await pool.query(queryStr));
+            res.status(StatusCodes.OK).json(await Db.pool.query(queryStr));
         })
     });
 

@@ -2,11 +2,16 @@ const { StatusCodes } = require("http-status-codes");
 const Pool = require("pg").Pool;
 const moment = require("moment");
 
+require('dotenv').config();
+console.log('development =', process.env.DEVELOPMENT);
+const dbPassword = process.env.DEVELOPMENT ? "brasil" : "xxxx";
+const dbHost = process.env.DEVELOPMENT ? "localhost" : "xxxx";
+
 const pool = new Pool({
     user: "postgres",
-    password: "brasil",
+    password: dbPassword,
     database: "eddi_db",
-    host: "localhost",
+    host: dbHost,
     port: 5432,
     acquireTimeoutMillis: 5000,
     createTimeoutMillis: 5000,

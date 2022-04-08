@@ -16,7 +16,7 @@ usersRouter.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT *
+                `SELECT user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
                  FROM ${TUSERS};`;
             console.log({ queryStr });
             res.status(StatusCodes.OK).json((await pool.query(queryStr)).rows);

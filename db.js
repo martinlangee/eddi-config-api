@@ -6,7 +6,7 @@ const pool = new Pool({
     user: "postgres",
     password: "brasil",
     database: "eddi_db",
-    host: "_localhost",
+    host: "localhost",
     port: 5432,
     acquireTimeoutMillis: 5000,
     createTimeoutMillis: 5000,

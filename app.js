@@ -48,10 +48,11 @@ app.use(`${baseRoute}/screenwidgets`, screenWidgetsRouter);
 
 // Error handling -----
 app.get('*', function(req, res, next) {
-    const error = new Error(
-        `${req.ip} tried to ${req.method} ${req.originalUrl}`,
-    );
-    error.statusCode = StatusCodes.MOVED_PERMANENTLY;
+    error = {
+        statusCode: StatusCodes.MOVED_PERMANENTLY,
+        message: `${req.ip} tried to ${req.method} ${req.originalUrl}`
+    };
+    console.log('REQ:', req);
     next(error);
 });
 
@@ -64,7 +65,7 @@ app.use((error, req, res, next) => {
     //     return res.status(StatusCodes.MOVED_PERMANENTLY).redirect('/not-found');
     // }
 
-    return res.status(error.statusCode).json({ error: error.toString() });
+    return res.status(error.statusCode).json(error);
 });
 
 const PORT = process.env.PORT || 3010;

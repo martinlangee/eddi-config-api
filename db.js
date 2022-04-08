@@ -4,13 +4,26 @@ const moment = require("moment");
 
 require('dotenv').config();
 console.log('development =', process.env.DEVELOPMENT);
-const dbPassword = process.env.DEVELOPMENT ? "brasil" : "xxxx";
-const dbHost = process.env.DEVELOPMENT ? "localhost" : "xxxx";
+
+let dbPassword = undefined;
+let dbDatabase = undefined;
+let dbUser = undefined;
+let dbHost = undefined;
+let dbConnectionStr = 'postgres://qkemcdpzbnefct:6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f@ec2-34-248-169-69.eu-west-1.compute.amazonaws.com:5432/d6bhuvlcnr5upu';
+
+if (process.env.DEVELOPMENT) {
+    dbConnectionStr = undefined;
+    dbPassword = "brasil";
+    dbHost = "localhost";
+    dbDatabase = "eddi_db";
+    dbUser = "postgres";
+}
 
 const pool = new Pool({
-    user: "postgres",
+    connectionString: dbConnectionStr,
     password: dbPassword,
-    database: "eddi_db",
+    database: dbDatabase,
+    user: dbUser,
     host: dbHost,
     port: 5432,
     acquireTimeoutMillis: 5000,
@@ -19,6 +32,11 @@ const pool = new Pool({
     waitForAvailableConnectionTimeoutMillis: 5000,
     connectionTimeoutMillis: 5000
 });
+
+pool.connect((err, client, release) => {
+    console.log('pool:', err ? err : "succesfully connected");
+    release();
+})
 
 const SECRET = "eddi-db-secret-key";
 const DATETIME_DISPLAY_FORMAT = `'YYYY-MM-DD HH24:MI'`;

@@ -36,7 +36,7 @@ usersRouter.route('')
                     '${last_name}', 
                     '${email}',
                     '${password}', 
-                    to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
+                    to_timestamp('${Db.formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
                     '${status}',
                     '${status}',
                     'NULL'         
@@ -101,7 +101,7 @@ usersRouter.route('/:userId')
                 // query other data fields
                 queryStr =
                     `UPDATE ${Db.TUSERS} SET ` +
-                    getParamQuery(dbField, value, isFirst = true) +
+                    Db.getParamQuery(dbField, value, isFirst = true) +
                     ` WHERE id = ${userId};`
             }
             console.log(req.body, { userId, queryStr });

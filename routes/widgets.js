@@ -77,8 +77,8 @@ widgetsRouter.route('')
                     '${thumbnail}', 
                     '${content}', 
                     '${public}', 
-                    to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT}),     
-                    to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})
+                    to_timestamp('${Db.formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT}),     
+                    to_timestamp('${Db.formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})
                    )
                    RETURNING id;`;
             console.log({ queryStr });
@@ -108,14 +108,14 @@ widgetsRouter.route('/:widgetId')
             const { name, description, size_x, size_y, thumbnail, content, public } = req.body;
             const queryStr =
                 `UPDATE ${Db.TWIDGETS} SET ` +
-                getParamQuery('name', name, isFirst = true) +
-                getParamQuery('description', description) +
-                getParamQuery('size_x', size_x) +
-                getParamQuery('size_y', size_y) +
-                getParamQuery('thumbnail', thumbnail) +
-                getParamQuery('content', content) +
-                getParamQuery('public', public) +
-                getParamQuery('last_saved', `to_timestamp('${formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
+                Db.getParamQuery('name', name, isFirst = true) +
+                Db.getParamQuery('description', description) +
+                Db.getParamQuery('size_x', size_x) +
+                Db.getParamQuery('size_y', size_y) +
+                Db.getParamQuery('thumbnail', thumbnail) +
+                Db.getParamQuery('content', content) +
+                Db.getParamQuery('public', public) +
+                Db.getParamQuery('last_saved', `to_timestamp('${Db.formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${widgetId};`
             console.log({ widgetId, queryStr });
             res.status(StatusCodes.ACCEPTED).json(await Db.pool.query(queryStr));

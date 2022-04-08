@@ -48,12 +48,11 @@ app.use(`${baseRoute}/screenwidgets`, screenWidgetsRouter);
 
 
 // Error handling -----
-app.get('*', function(req, res, next) {
+app.use('*', function(req, res, next) {
     error = {
         statusCode: StatusCodes.MOVED_PERMANENTLY,
-        message: `${req.ip} tried to ${req.method} ${req.originalUrl}`
+        message: `${req.ip} failed to ${req.method} '${req.originalUrl}'`
     };
-    console.log('REQ:', req);
     next(error);
 });
 

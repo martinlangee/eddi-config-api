@@ -1,3 +1,4 @@
+const { StatusCodes } = require("http-status-codes");
 const moment = require("moment");
 
 /// encapsules a call to the passed async function into a try..catch block
@@ -6,7 +7,10 @@ const tryCatch = async(req, res, func) => {
         return await func(req, res);
     } catch (error) {
         console.error("!!!", error);
-        res.status(error.message);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).send({
+            ...error,
+            status: StatusCodes.INTERNAL_SERVER_ERROR
+        });
     }
 }
 

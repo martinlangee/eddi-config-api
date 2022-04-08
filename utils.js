@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const { networkInterfaces } = require('os');
 const moment = require("moment");
 
 /// encapsules a call to the passed async function into a try..catch block
@@ -37,8 +38,27 @@ const addParamQuery = (name, dataObj, isFirst = false) => {
     return getParamQuery(name, dataObj[name], isFirst);
 }
 
+const getLocalIpAddresses = () => {
+    const nets = networkInterfaces();
+    const results = {};
+
+    for (const name of Object.keys(nets)) {
+        for (const net of nets[name]) {
+            // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+            if (net.family === 'IPv4' && !net.internal) {
+                if (!results[name]) {
+                    results[name] = [];
+                }
+                results[name].push(net.address);
+            }
+        }
+        return results;
+    };
+}
+
 const formatDateTime = (dateTime) => moment(dateTime).format('YYYY-MM-DD HH:mm')
 
 const DATETIME_DISPLAY_FORMAT = `'YYYY-MM-DD HH24:MI'`;
 
-module.exports = { tryCatch, getParamQuery, addParamQuery, formatDateTime, DATETIME_DISPLAY_FORMAT };
+
+module.exports = { tryCatch, getParamQuery, addParamQuery, formatDateTime, getLocalIpAddresses, DATETIME_DISPLAY_FORMAT };

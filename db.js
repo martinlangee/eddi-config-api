@@ -15,8 +15,6 @@ const pool = new Pool({
     connectionTimeoutMillis: 5000
 })
 
-console.log('Pool created:', pool);
-
 const SECRET = "eddi-db-secret-key";
 
 const TUSERS = 'users';

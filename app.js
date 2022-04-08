@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const { networkInterfaces } = require('os');
 const express = require("express");
 const bodyParser = require("body-parser");
 var cors = require('cors');
@@ -9,6 +10,7 @@ const { usersRouter } = require("./routes/users");
 const { widgetsRouter } = require("./routes/widgets");
 const { screensRouter } = require("./routes/screens");
 const { screenWidgetsRouter } = require("./routes/screenWidgets");
+const { getLocalIpAddresses } = require("./utils");
 
 const baseRoute = '/api';
 
@@ -71,4 +73,5 @@ app.use((error, req, res, next) => {
 const PORT = process.env.PORT || 3010;
 app.listen(PORT, () => {
     console.log(`server is listening on port ${PORT}`);
+    console.log('local ip:', getLocalIpAddresses());
 })

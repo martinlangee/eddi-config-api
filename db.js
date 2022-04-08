@@ -6,9 +6,16 @@ const pool = new Pool({
     user: "postgres",
     password: "brasil",
     database: "eddi_db",
-    host: "localhost",
-    port: 5432
+    host: "_localhost",
+    port: 5432,
+    acquireTimeoutMillis: 5000,
+    createTimeoutMillis: 5000,
+    idleTimeoutMillis: 60000,
+    waitForAvailableConnectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 5000
 })
+
+console.log('Pool created:', pool);
 
 const SECRET = "eddi-db-secret-key";
 

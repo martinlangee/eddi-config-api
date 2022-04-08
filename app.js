@@ -1,5 +1,4 @@
 const { StatusCodes } = require("http-status-codes");
-const { networkInterfaces } = require('os');
 const express = require("express");
 const bodyParser = require("body-parser");
 var cors = require('cors');

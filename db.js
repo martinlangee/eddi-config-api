@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const Pool = require("pg").Pool;
+const { Pool, Client } = require("pg");
 const moment = require("moment");
 
 require('dotenv').config();
@@ -9,18 +9,26 @@ let dbPassword = undefined;
 let dbDatabase = undefined;
 let dbUser = undefined;
 let dbHost = undefined;
-let dbConnectionStr = 'postgres://qkemcdpzbnefct:6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f@ec2-34-248-169-69.eu-west-1.compute.amazonaws.com:5432/d6bhuvlcnr5upu';
+let dbSslmode = undefined;
+//let dbConnectionStr = 'postgres://qkemcdpzbnefct:6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f@ec2-34-248-169-69.eu-west-1.compute.amazonaws.com:5432/d6bhuvlcnr5upu';
 
 if (process.env.DEVELOPMENT) {
     dbConnectionStr = undefined;
-    dbPassword = "brasil";
     dbHost = "localhost";
-    dbDatabase = "eddi_db";
     dbUser = "postgres";
+    dbPassword = "brasil";
+    dbDatabase = "eddi_db";
+    dbSslmode = undefined;
+} else {
+    dbHost = "ec2-34-248-169-69.eu-west-1.compute.amazonaws.com";
+    dbUser = "qkemcdpzbnefct";
+    dbPassword = "6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f";
+    dbDatabase = "d6bhuvlcnr5upu";
+    dbSslmode = "require";
 }
 
 const pool = new Pool({
-    connectionString: dbConnectionStr,
+    //connectionString: dbConnectionStr,
     password: dbPassword,
     database: dbDatabase,
     user: dbUser,
@@ -30,7 +38,8 @@ const pool = new Pool({
     createTimeoutMillis: 5000,
     idleTimeoutMillis: 60000,
     waitForAvailableConnectionTimeoutMillis: 5000,
-    connectionTimeoutMillis: 5000
+    connectionTimeoutMillis: 5000,
+    sslmode: dbSslmode
 });
 
 pool.connect((err, client, release) => {

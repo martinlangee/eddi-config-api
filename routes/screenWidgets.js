@@ -26,9 +26,23 @@ screenWidgetsRouter.use(express.json()); // => req.body
 
 // '/screenswidgets' Routes ------
 
+screenWidgetsRouter.route('')
+    // get all screen widgets
+    .get((req, res) => {
+        tryCatch(req, res, async(req, res) => {
+            const { screenId } = req.params;
+            const queryStr =
+                `SELECT screen_id, widget_id, x_pos, y_pos, ${Db.TSCREENSWIDGETS}.size_x, ${Db.TSCREENSWIDGETS}.size_y, ${Db.TWIDGETS}.user_id as user_id, ${Db.TWIDGETS}.name, ${Db.TWIDGETS}.thumbnail, ${Db.TWIDGETS}.public
+                     FROM ${Db.TSCREENSWIDGETS}
+                     JOIN ${Db.TWIDGETS}
+                       ON widget_id = ${Db.TWIDGETS}.id;`;
+            console.log({ screenId, queryStr });
+            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
+        })
+    })
 screenWidgetsRouter.route('/:screenId')
     // get all widgets on the specified screen
-    .get((req, res, next) => {
+    .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { screenId } = req.params;
             const queryStr =

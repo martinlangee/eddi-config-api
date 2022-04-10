@@ -16,7 +16,7 @@ usersRouter.route('')
     .get((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const queryStr =
-                `SELECT user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
+                `SELECT id, user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
                  FROM ${Db.TUSERS};`;
             console.log({ queryStr });
             res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
@@ -55,7 +55,7 @@ usersRouter.route('/:userId')
         tryCatch(req, res, async(req, res) => {
             const { userId } = req.params;
             const queryStr =
-                `SELECT *
+                `SELECT id, user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
                  FROM ${Db.TUSERS}
                  WHERE id = ${userId};`
             console.log({ userId, queryStr });

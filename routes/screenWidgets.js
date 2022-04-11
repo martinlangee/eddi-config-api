@@ -11,7 +11,7 @@ const insertNewScreenWidget = async(screen_id, widget_id, user_id, x_pos, y_pos,
          VALUES
           (${screen_id}, ${widget_id}, ${user_id}, ${x_pos}, ${y_pos},  ${size_x}, ${size_y})`;
     console.log('INSERT', { screen_id, queryStr });
-    return await Db.pool.query(queryStr);
+    return await Db.pgClient.query(queryStr);
 }
 
 const deleteScreenWidgets = async(screenId) => {
@@ -19,7 +19,7 @@ const deleteScreenWidgets = async(screenId) => {
         `DELETE FROM ${Db.TSCREENSWIDGETS}
          WHERE screen_id = ${screenId};`;
     console.log({ screenId, queryStr });
-    return await Db.pool.query(queryStr);
+    return await Db.pgClient.query(queryStr);
 }
 
 screenWidgetsRouter.use(express.json()); // => req.body
@@ -37,7 +37,7 @@ screenWidgetsRouter.route('')
                      JOIN ${Db.TWIDGETS}
                        ON widget_id = ${Db.TWIDGETS}.id;`;
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
         })
     })
 screenWidgetsRouter.route('/:screenId')
@@ -53,7 +53,7 @@ screenWidgetsRouter.route('/:screenId')
                      WHERE screen_id = ${screenId}
                      ORDER BY ${Db.TWIDGETS}.name;`;
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
         })
     })
     // set new screen-widgets on screen of '/<screenId>'

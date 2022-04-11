@@ -19,7 +19,7 @@ usersRouter.route('')
                 `SELECT id, user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
                  FROM ${Db.TUSERS};`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
         })
     })
     // create user
@@ -45,7 +45,7 @@ usersRouter.route('')
                  RETURNING id;`; // TODO: save image data (from Base64?)
             console.log({ queryStr });
             // TODO: check query result => send error
-            res.status(StatusCodes.CREATED).json(await Db.pool.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pgClient.query(queryStr));
         })
     });
 
@@ -59,7 +59,7 @@ usersRouter.route('/:userId')
                  FROM ${Db.TUSERS}
                  WHERE id = ${userId};`
             console.log({ userId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pool.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
         });
     })
     // update user
@@ -105,7 +105,7 @@ usersRouter.route('/:userId')
                     ` WHERE id = ${userId};`
             }
             console.log(req.body, { userId, queryStr });
-            const resp = await Db.pool.query(queryStr);
+            const resp = await Db.pgClient.query(queryStr);
             if (resp.rowCount === 1) {
                 return res.send({ result: true, message: successMessage || `Parameter ${dbField} changed`, status: StatusCodes.ACCEPTED });
             } else {
@@ -123,21 +123,21 @@ usersRouter.route('/:userId')
                 `DELETE FROM ${Db.TSCREENSWIDGETS} 
                  WHERE user_id = ${userId};`
             console.log({ userId, queryStr });
-            await Db.pool.query(queryStr);
+            await Db.pgClient.query(queryStr);
 
             // delete all widgets of the user
             queryStr =
                 `DELETE FROM ${TWIDGETS} 
                  WHERE user_id = ${userId};`
             console.log({ userId, queryStr });
-            await Db.pool.query(queryStr);
+            await Db.pgClient.query(queryStr);
 
             // delete user itself
             queryStr =
                 `DELETE FROM ${Db.TUSERS} 
                  WHERE id = ${userId};`
             console.log({ userId, queryStr });
-            const success = await Db.pool.query(queryStr).rowCount > 0;
+            const success = await Db.pgClient.query(queryStr).rowCount > 0;
             res.status(success ? StatusCodes.OK : StatusCodes.NOT_FOUND)
                 .send({
                     message: (success ? `User ${userId} deleted` : `User ${userId} not found`),

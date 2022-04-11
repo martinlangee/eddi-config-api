@@ -1,51 +1,41 @@
 const { StatusCodes } = require("http-status-codes");
-const { Pool, Client } = require("pg");
+const { Client } = require("pg");
 const moment = require("moment");
 
 require('dotenv').config();
-console.log('development =', process.env.DEVELOPMENT);
 
-let dbPassword = undefined;
-let dbDatabase = undefined;
-let dbUser = undefined;
-let dbHost = undefined;
-let dbSslmode = undefined;
-//let dbConnectionStr = 'postgres://qkemcdpzbnefct:6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f@ec2-34-248-169-69.eu-west-1.compute.amazonaws.com:5432/d6bhuvlcnr5upu';
+let dbConnectionStr = process.env.PGCONNECTION;
 
-if (process.env.DEVELOPMENT) {
-    dbConnectionStr = undefined;
-    dbHost = "localhost";
-    dbUser = "postgres";
-    dbPassword = "brasil";
-    dbDatabase = "eddi_db";
-    dbSslmode = undefined;
-} else {
-    dbHost = "ec2-34-248-169-69.eu-west-1.compute.amazonaws.com";
-    dbUser = "qkemcdpzbnefct";
-    dbPassword = "6e4cd1b9e6fd42ac3d14c16606b3fc9d769dbc8667151641fee9f013cc48625f";
-    dbDatabase = "d6bhuvlcnr5upu";
-    dbSslmode = "require";
+if (process.env.NODE_ENV === 'development') {
+    const dbHost = "localhost";
+    const dbUser = "postgres";
+    const dbPassword = "brasil";
+    const dbDatabase = "eddi_db";
+    const dbPort = 5432;
+    dbConnectionStr = `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbDatabase}`;
 }
 
-const pool = new Pool({
-    //connectionString: dbConnectionStr,
-    password: dbPassword,
-    database: dbDatabase,
-    user: dbUser,
-    host: dbHost,
-    port: 5432,
-    acquireTimeoutMillis: 5000,
-    createTimeoutMillis: 5000,
-    idleTimeoutMillis: 60000,
-    waitForAvailableConnectionTimeoutMillis: 5000,
-    connectionTimeoutMillis: 5000,
-    sslmode: dbSslmode
-});
+const options = process.env.NODE_ENV === 'development' ? {
+    connectionString: dbConnectionStr,
+} : {
+    connectionString: dbConnectionStr,
+    ssl: {
+        rejectUnauthorized: false
+    }
+}
 
-pool.connect((err, client, release) => {
-    console.log('pool:', err ? err : "succesfully connected");
-    release();
-})
+const pgClient = new Client(options);
+
+pgClient.connect()
+    .then(() => {
+        pgClient.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
+            if (err) throw err;
+            /* for (let row of res.rows) {
+                 console.log(JSON.stringify(row));
+             } */
+            pgClient.end();
+        })
+    });
 
 const SECRET = "eddi-db-secret-key";
 const DATETIME_DISPLAY_FORMAT = `'YYYY-MM-DD HH24:MI'`;
@@ -63,7 +53,7 @@ const getSeePublicWidgets = async(userId) => {
          FROM users
          WHERE id = ${userId}`;
     console.log({ queryStr });
-    return (await pool.query(queryStr)).rows[0].see_public_widgets;
+    return (await pgClient.query(queryStr)).rows[0].see_public_widgets;
 }
 
 const getSeePublicScreens = async(userId) => {
@@ -72,7 +62,7 @@ const getSeePublicScreens = async(userId) => {
          FROM users
          WHERE id = ${userId}`;
     console.log({ queryStr });
-    const row = (await pool.query(queryStr)).rows[0].see_public_screens;
+    const row = (await pgClient.query(queryStr)).rows[0].see_public_screens;
     return row;
 }
 
@@ -82,7 +72,7 @@ const checkDuplicateUsername = async(userId, username) => {
          FROM users
          WHERE id <> ${userId}`;
     console.log({ queryStr });
-    const users = (await pool.query(queryStr)).rows;
+    const users = (await pgClient.query(queryStr)).rows;
 
 
     if (users && users.find(user => user.user_name === username)) {
@@ -98,7 +88,7 @@ const checkDuplicateEmail = async(userId, email) => {
          FROM users
          WHERE id <> ${userId}`;
     console.log("Check email", { queryStr });
-    const users = (await pool.query(queryStr)).rows;
+    const users = (await pgClient.query(queryStr)).rows;
 
     if (users && users.find(user => user.email === email))
         return { result: false, message: "Failed: E-mail already assigned.", status: StatusCodes.BAD_REQUEST };
@@ -118,7 +108,7 @@ const insertUser = async(username, email, pwdhash) => {
             to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}))
             RETURNING id;`;
     console.log({ queryStr });
-    return { "id": (await pool.query(queryStr)).rows[0].id, "password": pwdhash };
+    return { "id": (await pgClient.query(queryStr)).rows[0].id, "password": pwdhash };
 }
 
 const findUserByEmail = async(email) => {
@@ -127,7 +117,7 @@ const findUserByEmail = async(email) => {
          FROM users
          WHERE email = '${email}' AND status = 'active';`;
     console.log({ queryStr });
-    const users = (await pool.query(queryStr)).rows;
+    const users = (await pgClient.query(queryStr)).rows;
     if (users && users.length) {
         return {...users[0], result: true };
     } else {
@@ -142,7 +132,7 @@ const findUserById = async(id) => {
          FROM users
          WHERE id = '${id}' AND status = 'active';`;
     console.log({ queryStr });
-    const users = (await pool.query(queryStr)).rows;
+    const users = (await pgClient.query(queryStr)).rows;
     if (users) {
         return {...users[0], result: true };
     } else {
@@ -174,7 +164,7 @@ const addParamQuery = (name, dataObj, isFirst = false) => {
 }
 
 const Db = {
-    pool,
+    pgClient,
     SECRET,
     TUSERS,
     TWIDGETS,

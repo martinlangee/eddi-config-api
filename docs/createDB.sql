@@ -20,7 +20,7 @@ CREATE TABLE users (
   created TIMESTAMP,
   status varchar(10),
   level INT,
-  image BYTEA,
+  image TEXT,
   see_public_screens BOOLEAN NOT NULL DEFAULT false,
   see_public_widgets BOOLEAN NOT NULL DEFAULT false
 );
@@ -32,7 +32,7 @@ CREATE TABLE widgets (
   description varchar,
   size_x INT NOT NULL,
   size_y INT NOT NULL,
-  thumbnail BYTEA,
+  thumbnail TEXT,
   content varchar,
   public BOOLEAN NOT NULL DEFAULT false,
   created TIMESTAMP,
@@ -50,7 +50,7 @@ CREATE TABLE screens (
   description varchar,
   size_x INT NOT NULL,
   size_y INT NOT NULL,
-  thumbnail BYTEA,
+  thumbnail TEXT,
   public BOOLEAN NOT NULL DEFAULT false,
   created TIMESTAMP,
   last_saved TIMESTAMP,

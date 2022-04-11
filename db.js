@@ -4,7 +4,7 @@ const moment = require("moment");
 
 require('dotenv').config();
 
-
+// ############################################
 const ENV_DEV = 'development';
 let dbConnection = process.env.PGCONNECTION;
 let dbDatabase = process.env.PG_DB;
@@ -109,7 +109,7 @@ const createDBTables = async(client) => {
                     created TIMESTAMP,
                     status varchar(10),
                     level INT,
-                    image BYTEA,
+                    image TEXT NOT NULL,
                     see_public_screens BOOLEAN NOT NULL DEFAULT false,
                     see_public_widgets BOOLEAN NOT NULL DEFAULT false
                 );`
@@ -125,7 +125,7 @@ const createDBTables = async(client) => {
             description varchar,
             size_x INT NOT NULL,
             size_y INT NOT NULL,
-            thumbnail BYTEA,
+            thumbnail TEXT NOT NULL,
             content varchar,
             public BOOLEAN NOT NULL DEFAULT false,
             created TIMESTAMP,
@@ -147,7 +147,7 @@ const createDBTables = async(client) => {
             description varchar,
             size_x INT NOT NULL,
             size_y INT NOT NULL,
-            thumbnail BYTEA,
+            thumbnail TEXT NOT NULL,
             public BOOLEAN NOT NULL DEFAULT false,
             created TIMESTAMP,
             last_saved TIMESTAMP,

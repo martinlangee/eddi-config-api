@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Db = require('../Db');
+const Db = require('../db');
 
 /*  currently not needed
 const requireAuth = (req, res, next) => {

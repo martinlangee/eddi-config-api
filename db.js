@@ -55,12 +55,12 @@ const createDB = async() => {
         await client.connect();
 
         let queryStr = `SELECT FROM pg_database WHERE datname = '${dbDatabase}'`;
-        console.log({ queryStr });
+        //console.log({ queryStr });
         res = await client.query(queryStr)
         if (res.rows.length === 0) {
             // database does not exist, make it:
             let queryStr = `CREATE DATABASE ${dbDatabase}`
-            console.log({ queryStr });
+                //console.log({ queryStr });
             await client.query(queryStr);
         }
     } catch (e) {
@@ -113,7 +113,7 @@ const createDBTables = async(client) => {
                     see_public_screens BOOLEAN NOT NULL DEFAULT false,
                     see_public_widgets BOOLEAN NOT NULL DEFAULT false
                 );`
-        console.log({ queryStr });
+            //console.log({ queryStr });
         await client.query(queryStr);
 
         // create widgets table if not exists
@@ -135,7 +135,7 @@ const createDBTables = async(client) => {
                   REFERENCES users(id)
                   ON DELETE SET NULL
           );`
-        console.log({ queryStr });
+            //console.log({ queryStr });
         await client.query(queryStr);
 
         // create screens table if not exists
@@ -155,7 +155,7 @@ const createDBTables = async(client) => {
               FOREIGN KEY(user_id) 
                   REFERENCES users(id)
                   ON DELETE CASCADE);`
-        console.log({ queryStr });
+            //console.log({ queryStr });
         await client.query(queryStr);
 
         // create screens_widgets table if not exists
@@ -178,7 +178,7 @@ const createDBTables = async(client) => {
                   REFERENCES widgets(id)
                   ON DELETE CASCADE
           );`
-        console.log({ queryStr });
+            //console.log({ queryStr });
         await client.query(queryStr);
     } catch (e) {
         console.log(e)
@@ -191,7 +191,7 @@ let pgPool;
 initDbPool()
     .then(pool => pgPool = pool);
 
-// !important: using function to export pgPool to ensure the exported pool (used in other modules) is always up-to-date 
+// !important: using function to export pgPool to ensure the exported pool is savely up-to-date when used in other modules
 const pool = () => pgPool;
 
 const SECRET = "eddi-db-secret-key";

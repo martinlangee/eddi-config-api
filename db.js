@@ -5,7 +5,7 @@ const moment = require("moment");
 require('dotenv').config();
 
 
-const ENV_DEV = 'xxx_development';
+const ENV_DEV = 'development';
 let dbConnection = process.env.PGCONNECTION;
 let dbDatabase = process.env.PG_DB;
 

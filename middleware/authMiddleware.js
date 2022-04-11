@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const Db = require('../Db');
 
 /*  currently not needed
 const requireAuth = (req, res, next) => {
@@ -7,7 +7,7 @@ const requireAuth = (req, res, next) => {
 
     // check json web token exists & is verified
     if (token) {
-        jwt.verify(token, db.SECRET, (err, decodedToken) => {
+        jwt.verify(token, Db.SECRET, (err, decodedToken) => {
             if (err) {
                 console.log(err.message);
                 res.redirect('/login');
@@ -27,7 +27,7 @@ const checkUser = (req, res, next) => {
     const token = req.cookies.jwt;
     if (token) {
         console.log('checkUser - token:', token);
-        jwt.verify(token, db.SECRET, async(err, decodedToken) => {
+        jwt.verify(token, Db.SECRET, async(err, decodedToken) => {
             console.log('checkUser - err:', err);
             if (err) {
                 res.locals.user = null;

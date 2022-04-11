@@ -14,7 +14,7 @@
         "sequelize": "^6.18.0"
     },
     "scripts": {
-        "start": "nodemon ./app.js",
+        "start": "nodemon ./app.js"
     },
     "devDependencies": {
         "node-env-run": "^2.0.1"

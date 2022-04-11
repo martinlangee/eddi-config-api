@@ -19,7 +19,7 @@ usersRouter.route('')
                 `SELECT id, user_name, first_name, last_name, email, created, status, level, image, see_public_widgets, see_public_screens
                  FROM ${Db.TUSERS};`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
         })
     })
     // create user
@@ -38,14 +38,14 @@ usersRouter.route('')
                     '${password}', 
                     to_timestamp('${Db.formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
                     '${status}',
-                    '${status}',
+                    '${level}',
                     'NULL'         
                     'false',
                     'false')
                  RETURNING id;`; // TODO: save image data (from Base64?)
             console.log({ queryStr });
             // TODO: check query result => send error
-            res.status(StatusCodes.CREATED).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pool().query(queryStr));
         })
     });
 
@@ -59,7 +59,8 @@ usersRouter.route('/:userId')
                  FROM ${Db.TUSERS}
                  WHERE id = ${userId};`
             console.log({ userId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            result = await Db.pool().query(queryStr);
+            res.status(StatusCodes.OK).json(result.rows);
         });
     })
     // update user
@@ -82,14 +83,14 @@ usersRouter.route('/:userId')
                 // check duplicates where unique data are required (user_name and email)
                 let { dbField, value } = req.body;
                 if (dbField === 'user_name') {
-                    const resp = await db.checkDuplicateUsername(userId, value);
+                    const resp = await Db.checkDuplicateUsername(userId, value);
                     if (!resp.result) {
                         console.log(resp);
                         return res.send(resp);
                     }
                 }
                 if (dbField === 'email') {
-                    const resp = await db.checkDuplicateEmail(userId, email);
+                    const resp = await Db.checkDuplicateEmail(userId, email);
                     if (!resp.result)
                         return res.send(resp);
                 }
@@ -105,7 +106,7 @@ usersRouter.route('/:userId')
                     ` WHERE id = ${userId};`
             }
             console.log(req.body, { userId, queryStr });
-            const resp = await Db.pgClient.query(queryStr);
+            const resp = await Db.pool().query(queryStr);
             if (resp.rowCount === 1) {
                 return res.send({ result: true, message: successMessage || `Parameter ${dbField} changed`, status: StatusCodes.ACCEPTED });
             } else {
@@ -123,21 +124,21 @@ usersRouter.route('/:userId')
                 `DELETE FROM ${Db.TSCREENSWIDGETS} 
                  WHERE user_id = ${userId};`
             console.log({ userId, queryStr });
-            await Db.pgClient.query(queryStr);
+            await Db.pool().query(queryStr);
 
             // delete all widgets of the user
             queryStr =
                 `DELETE FROM ${TWIDGETS} 
                  WHERE user_id = ${userId};`
             console.log({ userId, queryStr });
-            await Db.pgClient.query(queryStr);
+            await Db.pool().query(queryStr);
 
             // delete user itself
             queryStr =
                 `DELETE FROM ${Db.TUSERS} 
                  WHERE id = ${userId};`
             console.log({ userId, queryStr });
-            const success = await Db.pgClient.query(queryStr).rowCount > 0;
+            const success = await Db.pool().query(queryStr).rowCount > 0;
             res.status(success ? StatusCodes.OK : StatusCodes.NOT_FOUND)
                 .send({
                     message: (success ? `User ${userId} deleted` : `User ${userId} not found`),
@@ -151,11 +152,11 @@ usersRouter.route('/signup')
         tryCatch(req, res, async(req, res) => {
             const { username, email, password } = req.body;
             // first check for duplicate username
-            let resp = await db.checkDuplicateUsername(-1, username);
+            let resp = await Db.checkDuplicateUsername(-1, username);
             if (!resp.result)
                 res.status(resp.status).send(resp);
             // then check for duplicate E-mail
-            resp = await db.checkDuplicateEmail(-1, email);
+            resp = await Db.checkDuplicateEmail(-1, email);
             if (!resp.result)
                 res.status(resp.status).send(resp);
             // if unique register new user with the specified data

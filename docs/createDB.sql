@@ -12,18 +12,17 @@ DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  user_name varchar NOT NULL,
+  user_name varchar UNIQUE NOT NULL,
   first_name varchar,
   last_name varchar,
   email varchar UNIQUE NOT NULL,
-  showPublicScreens BOOLEAN,
   password varchar NOT NULL,
   created TIMESTAMP,
   status varchar(10),
   level INT,
   image BYTEA,
-  see_public_screens BOOLEAN,
-  see_public_widgets BOOLEAN
+  see_public_screens BOOLEAN NOT NULL DEFAULT false,
+  see_public_widgets BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE TABLE widgets (
@@ -35,7 +34,7 @@ CREATE TABLE widgets (
   size_y INT NOT NULL,
   thumbnail BYTEA,
   content varchar,
-  public BOOLEAN,
+  public BOOLEAN NOT NULL DEFAULT false,
   created TIMESTAMP,
   last_saved TIMESTAMP,
   CONSTRAINT fk_user
@@ -52,7 +51,7 @@ CREATE TABLE screens (
   size_x INT NOT NULL,
   size_y INT NOT NULL,
   thumbnail BYTEA,
-  public BOOLEAN,
+  public BOOLEAN NOT NULL DEFAULT false,
   created TIMESTAMP,
   last_saved TIMESTAMP,
   CONSTRAINT fk_user

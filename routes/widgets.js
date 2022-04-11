@@ -39,7 +39,8 @@ widgetsRouter.route('')
                        ON user_id = ${Db.TUSERS}.id
                      WHERE user_id = ${userId}${querySeePublic};`;
                 console.log({ userId, seePublic, queryStr });
-                res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+                const result = await Db.pool().query(queryStr);
+                res.status(StatusCodes.OK).json(result.rows);
             })
         } else {
             next();
@@ -57,7 +58,8 @@ widgetsRouter.route('')
                    ON user_id = ${Db.TUSERS}.id
                    ${queryOnlyPublic};`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            const result = await Db.pool().query(queryStr);
+            res.status(StatusCodes.OK).json(result.rows);
         })
     })
     // create widget
@@ -82,7 +84,7 @@ widgetsRouter.route('')
                    )
                    RETURNING id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.CREATED).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pool().query(queryStr));
         })
     });
 
@@ -98,7 +100,7 @@ widgetsRouter.route('/:widgetId')
                    ON user_id = ${Db.TUSERS}.id
                  WHERE ${Db.TWIDGETS}.id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
         })
     })
     // update widget
@@ -118,7 +120,7 @@ widgetsRouter.route('/:widgetId')
                 Db.getParamQuery('last_saved', `to_timestamp('${Db.formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${widgetId};`
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.ACCEPTED).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await Db.pool().query(queryStr));
         })
     })
     // delete widget
@@ -131,14 +133,14 @@ widgetsRouter.route('/:widgetId')
                 `DELETE FROM ${Db.TSCREENSWIDGETS} 
                  WHERE widget_id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            await Db.pgClient.query(queryStr);
+            await Db.pool().query(queryStr);
 
             // delete widget itself
             queryStr =
                 `DELETE FROM ${Db.TWIDGETS} 
                  WHERE id = ${widgetId};`;
             console.log({ widgetId, queryStr });
-            res.status(StatusCodes.OK).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.OK).json(await Db.pool().query(queryStr));
         })
     });
 

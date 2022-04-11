@@ -1,41 +1,198 @@
 const { StatusCodes } = require("http-status-codes");
-const { Client } = require("pg");
+const { Pool, Client } = require("pg");
 const moment = require("moment");
 
 require('dotenv').config();
 
-let dbConnectionStr = process.env.PGCONNECTION;
 
-if (process.env.NODE_ENV === 'development') {
+const ENV_DEV = 'xxx_development';
+let dbConnection = process.env.PGCONNECTION;
+let dbDatabase = process.env.PG_DB;
+
+console.log(process.env.NODE_ENV);
+
+if (process.env.NODE_ENV === ENV_DEV) {
     const dbHost = "localhost";
     const dbUser = "postgres";
     const dbPassword = "brasil";
-    const dbDatabase = "eddi_db";
     const dbPort = 5432;
-    dbConnectionStr = `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbDatabase}`;
+    dbDatabase = "eddi_db";
+    dbConnection = `postgres://${dbUser}:${dbPassword}@${dbHost}:${dbPort}`;
 }
 
-const options = process.env.NODE_ENV === 'development' ? {
-    connectionString: dbConnectionStr,
-} : {
-    connectionString: dbConnectionStr,
-    ssl: {
-        rejectUnauthorized: false
+const initDbPool = async() => {
+    await createDB();
+    await createDBTables();
+    return new Promise((resolve) => {
+        const options = process.env.NODE_ENV === ENV_DEV ? {
+            connectionString: `${dbConnection}/${dbDatabase}`,
+        } : {
+            connectionString: `${dbConnection}/${dbDatabase}`,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        }
+        const pool = new Pool(options);
+        pool.connect((err, client, release) => {
+            console.log('pool:', err ? err : "succesfully connected");
+            release();
+        });
+        resolve(pool);
+    });
+}
+
+const createDB = async() => {
+    try {
+        let options = process.env.NODE_ENV === ENV_DEV ? {
+            connectionString: `${dbConnection}/`,
+        } : {
+            connectionString: `${dbConnection}/${dbDatabase}`, // on heroku server, database is already created
+            ssl: {
+                rejectUnauthorized: false
+            }
+        }
+        var client = new Client(options);
+        await client.connect();
+
+        let queryStr = `SELECT FROM pg_database WHERE datname = '${dbDatabase}'`;
+        console.log({ queryStr });
+        res = await client.query(queryStr)
+        if (res.rows.length === 0) {
+            // database does not exist, make it:
+            let queryStr = `CREATE DATABASE ${dbDatabase}`
+            console.log({ queryStr });
+            await client.query(queryStr);
+        }
+    } catch (e) {
+        console.log(e);
+    } finally {
+        client.end();
+    }
+}
+const createDBTables = async(client) => {
+    try {
+        let options = process.env.NODE_ENV === ENV_DEV ? {
+            connectionString: `${dbConnection}/${dbDatabase}`,
+        } : {
+            connectionString: `${dbConnection}/${dbDatabase}`,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        }
+        client = new Client(options);
+        await client.connect();
+
+        /* re-create all tables:       
+                let queryStr = 'DROP TABLE screens_widgets';
+                console.log({ queryStr });
+                await client.query(queryStr);
+                queryStr = 'DROP TABLE screens';
+                console.log({ queryStr });
+                await client.query(queryStr);
+                queryStr = 'DROP TABLE widgets';
+                console.log({ queryStr });
+                await client.query(queryStr);
+                queryStr = 'DROP TABLE users';
+                console.log({ queryStr });
+                await client.query(queryStr);
+                */
+
+        // create users table if not exists
+        queryStr =
+            `CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    user_name varchar UNIQUE NOT NULL,
+                    first_name varchar,
+                    last_name varchar,
+                    email varchar UNIQUE NOT NULL,
+                    password varchar NOT NULL,
+                    created TIMESTAMP,
+                    status varchar(10),
+                    level INT,
+                    image BYTEA,
+                    see_public_screens BOOLEAN NOT NULL DEFAULT false,
+                    see_public_widgets BOOLEAN NOT NULL DEFAULT false
+                );`
+        console.log({ queryStr });
+        await client.query(queryStr);
+
+        // create widgets table if not exists
+        queryStr =
+            `CREATE TABLE IF NOT EXISTS widgets (
+            id SERIAL PRIMARY KEY,
+            user_id INT,
+            name varchar NOT NULL,
+            description varchar,
+            size_x INT NOT NULL,
+            size_y INT NOT NULL,
+            thumbnail BYTEA,
+            content varchar,
+            public BOOLEAN NOT NULL DEFAULT false,
+            created TIMESTAMP,
+            last_saved TIMESTAMP,
+            CONSTRAINT fk_user
+              FOREIGN KEY(user_id) 
+                  REFERENCES users(id)
+                  ON DELETE SET NULL
+          );`
+        console.log({ queryStr });
+        await client.query(queryStr);
+
+        // create screens table if not exists
+        queryStr =
+            `CREATE TABLE IF NOT EXISTS screens (
+            id SERIAL PRIMARY KEY,
+            user_id INT,
+            name varchar NOT NULL,
+            description varchar,
+            size_x INT NOT NULL,
+            size_y INT NOT NULL,
+            thumbnail BYTEA,
+            public BOOLEAN NOT NULL DEFAULT false,
+            created TIMESTAMP,
+            last_saved TIMESTAMP,
+            CONSTRAINT fk_user
+              FOREIGN KEY(user_id) 
+                  REFERENCES users(id)
+                  ON DELETE CASCADE);`
+        console.log({ queryStr });
+        await client.query(queryStr);
+
+        // create screens_widgets table if not exists
+        queryStr =
+            `CREATE TABLE IF NOT EXISTS screens_widgets (
+            screen_id INT,
+            widget_id INT,
+            user_id INT,
+            x_pos INT,
+            y_pos INT,
+            size_x INT NOT NULL,
+            size_y INT NOT NULL,
+            PRIMARY KEY (screen_id, widget_id),
+            CONSTRAINT fk_screens
+              FOREIGN KEY(screen_id) 
+                  REFERENCES screens(id)
+                  ON DELETE CASCADE,
+            CONSTRAINT fk_widgets
+              FOREIGN KEY(widget_id) 
+                  REFERENCES widgets(id)
+                  ON DELETE CASCADE
+          );`
+        console.log({ queryStr });
+        await client.query(queryStr);
+    } catch (e) {
+        console.log(e)
+    } finally {
+        client.end();
     }
 }
 
-const pgClient = new Client(options);
+let pgPool;
+initDbPool()
+    .then(pool => pgPool = pool);
 
-pgClient.connect()
-    .then(() => {
-        pgClient.query('SELECT table_schema,table_name FROM information_schema.tables;', (err, res) => {
-            if (err) throw err;
-            /* for (let row of res.rows) {
-                 console.log(JSON.stringify(row));
-             } */
-            pgClient.end();
-        })
-    });
+// !important: using function to export pgPool to ensure the exported pool (used in other modules) is always up-to-date 
+const pool = () => pgPool;
 
 const SECRET = "eddi-db-secret-key";
 const DATETIME_DISPLAY_FORMAT = `'YYYY-MM-DD HH24:MI'`;
@@ -53,7 +210,9 @@ const getSeePublicWidgets = async(userId) => {
          FROM users
          WHERE id = ${userId}`;
     console.log({ queryStr });
-    return (await pgClient.query(queryStr)).rows[0].see_public_widgets;
+    const res = await pool().query(queryStr);
+    console.log({ res });
+    return res.rows[0].see_public_widgets === true;
 }
 
 const getSeePublicScreens = async(userId) => {
@@ -62,8 +221,7 @@ const getSeePublicScreens = async(userId) => {
          FROM users
          WHERE id = ${userId}`;
     console.log({ queryStr });
-    const row = (await pgClient.query(queryStr)).rows[0].see_public_screens;
-    return row;
+    return (await pool().query(queryStr)).rows[0].see_public_screens === true;
 }
 
 const checkDuplicateUsername = async(userId, username) => {
@@ -72,7 +230,7 @@ const checkDuplicateUsername = async(userId, username) => {
          FROM users
          WHERE id <> ${userId}`;
     console.log({ queryStr });
-    const users = (await pgClient.query(queryStr)).rows;
+    const users = (await pool().query(queryStr)).rows;
 
 
     if (users && users.find(user => user.user_name === username)) {
@@ -88,7 +246,7 @@ const checkDuplicateEmail = async(userId, email) => {
          FROM users
          WHERE id <> ${userId}`;
     console.log("Check email", { queryStr });
-    const users = (await pgClient.query(queryStr)).rows;
+    const users = (await pool().query(queryStr)).rows;
 
     if (users && users.find(user => user.email === email))
         return { result: false, message: "Failed: E-mail already assigned.", status: StatusCodes.BAD_REQUEST };
@@ -108,7 +266,13 @@ const insertUser = async(username, email, pwdhash) => {
             to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}))
             RETURNING id;`;
     console.log({ queryStr });
-    return { "id": (await pgClient.query(queryStr)).rows[0].id, "password": pwdhash };
+    try {
+        res = await pool().query(queryStr)
+
+    } catch (error) {
+        console.log(error);
+    }
+    return { "id": res.rows[0].id, "password": pwdhash };
 }
 
 const findUserByEmail = async(email) => {
@@ -117,7 +281,7 @@ const findUserByEmail = async(email) => {
          FROM users
          WHERE email = '${email}' AND status = 'active';`;
     console.log({ queryStr });
-    const users = (await pgClient.query(queryStr)).rows;
+    const users = (await pool().query(queryStr)).rows;
     if (users && users.length) {
         return {...users[0], result: true };
     } else {
@@ -132,7 +296,7 @@ const findUserById = async(id) => {
          FROM users
          WHERE id = '${id}' AND status = 'active';`;
     console.log({ queryStr });
-    const users = (await pgClient.query(queryStr)).rows;
+    const users = (await pool().query(queryStr)).rows;
     if (users) {
         return {...users[0], result: true };
     } else {
@@ -164,13 +328,13 @@ const addParamQuery = (name, dataObj, isFirst = false) => {
 }
 
 const Db = {
-    pgClient,
     SECRET,
     TUSERS,
     TWIDGETS,
     TSCREENS,
     TSCREENSWIDGETS,
     DATETIME_DISPLAY_FORMAT,
+    pool,
     formatDateTime,
     getSeePublicWidgets,
     getSeePublicScreens,

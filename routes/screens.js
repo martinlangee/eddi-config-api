@@ -38,7 +38,7 @@ screensRouter.route('')
                        ON user_id = ${Db.TUSERS}.id
                      WHERE user_id = ${userId}${querySeePublic};`;
                 console.log({ userId, seePublic, queryStr });
-                res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+                res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
             })
         } else {
             next();
@@ -58,7 +58,7 @@ screensRouter.route('')
                        ON ${Db.TSCREENS}.id = screen_id
                      WHERE widgets.id = ${widgetId}`;
                 console.log({ widgetId, queryStr });
-                res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+                res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
             })
         } else {
             next();
@@ -74,7 +74,7 @@ screensRouter.route('')
                  JOIN ${Db.TUSERS}
                    ON user_id = ${Db.TUSERS}.id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
         })
     })
     // create screen
@@ -98,7 +98,7 @@ screensRouter.route('')
                     )
                  RETURNING id;`;
             console.log({ queryStr });
-            res.status(StatusCodes.CREATED).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.CREATED).json(await Db.pool().query(queryStr));
         })
     });
 
@@ -115,7 +115,7 @@ screensRouter.route('/:screenId')
                    ON user_id = ${Db.TUSERS}.id
                  WHERE ${Db.TSCREENS}.id = ${screenId};`;
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json((await Db.pgClient.query(queryStr)).rows);
+            res.status(StatusCodes.OK).json((await Db.pool().query(queryStr)).rows);
         })
     })
     // update screen
@@ -135,7 +135,7 @@ screensRouter.route('/:screenId')
                 Db.getParamQuery('last_saved', `to_timestamp('${Db.formatDateTime(Date.now())}', ${Db.DATETIME_DISPLAY_FORMAT})`, false, false) +
                 ` WHERE id = ${screenId};`
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.ACCEPTED).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.ACCEPTED).json(await Db.pool().query(queryStr));
         })
     })
     // delete screen
@@ -150,7 +150,7 @@ screensRouter.route('/:screenId')
                 `DELETE FROM ${Db.TSCREENS} 
                  WHERE id = ${screenId};`
             console.log({ screenId, queryStr });
-            res.status(StatusCodes.OK).json(await Db.pgClient.query(queryStr));
+            res.status(StatusCodes.OK).json(await Db.pool().query(queryStr));
         })
     });
 

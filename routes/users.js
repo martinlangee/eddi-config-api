@@ -39,7 +39,7 @@ usersRouter.route('')
                     to_timestamp('${Db.formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}),
                     '${status}',
                     '${level}',
-                    'NULL'         
+                    ''         
                     'false',
                     'false')
                  RETURNING id;`; // TODO: save image data (from Base64?)

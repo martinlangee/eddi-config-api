@@ -257,12 +257,13 @@ const checkDuplicateEmail = async(userId, email) => {
 const insertUser = async(username, email, pwdhash) => {
     const queryStr =
         `INSERT INTO ${TUSERS}
-           (user_name, email, password, status, created)
+           (user_name, email, password, status, image, created)
          VALUES
            ('${username}', 
             '${email}',
             '${pwdhash}', 
             'active',
+            '',
             to_timestamp('${formatDateTime(Date.now())}', ${DATETIME_DISPLAY_FORMAT}))
             RETURNING id;`;
     console.log({ queryStr });

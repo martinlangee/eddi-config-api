@@ -21,10 +21,6 @@ const { getLocalIpAddresses } = require("./utils");
 
 const baseRoute = '/api';
 
-// allow cross-origin requests
-//app.use(cors({
-//    origin: "http://localhost:3000"
-//}));
 app.use(cors());
 
 app.use(function(req, res, next) {

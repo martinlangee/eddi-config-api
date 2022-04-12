@@ -90,7 +90,7 @@ usersRouter.route('/:userId')
                     }
                 }
                 if (dbField === 'email') {
-                    const resp = await Db.checkDuplicateEmail(userId, email);
+                    const resp = await Db.checkDuplicateEmail(userId, value);
                     if (!resp.result)
                         return res.send(resp);
                 }
@@ -189,7 +189,7 @@ usersRouter.route('/login')
                 expiresIn: 86400 // 24 hours
             });
 
-            res.status(StatusCodes.ACCEPTED).send({ id: user.id, username: user.user_name, level: user.level, accessToken: token });
+            res.status(StatusCodes.ACCEPTED).send({ id: user.id, username: user.user_name, level: user.level, image: user.image, accessToken: token });
         })
     });
 

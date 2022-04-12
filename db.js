@@ -278,7 +278,7 @@ const insertUser = async(username, email, pwdhash) => {
 
 const findUserByEmail = async(email) => {
     const queryStr =
-        `SELECT id, user_name, email, password, level, status
+        `SELECT id, user_name, email, password, level, image, status
          FROM users
          WHERE email = '${email}' AND status = 'active';`;
     console.log({ queryStr });
@@ -329,6 +329,7 @@ const addParamQuery = (name, dataObj, isFirst = false) => {
 }
 
 const Db = {
+    ENV_DEV,
     SECRET,
     TUSERS,
     TWIDGETS,

@@ -67,6 +67,7 @@ usersRouter.route('/:userId')
     .put((req, res) => {
         tryCatch(req, res, async(req, res) => {
             const { userId } = req.params;
+            let { dbField, value } = req.body;
             let queryStr = '';
             let successMessage = "";
             if (req.query.see_public_widgets) {
@@ -81,7 +82,6 @@ usersRouter.route('/:userId')
                     ` WHERE id = ${userId};`
             } else {
                 // check duplicates where unique data are required (user_name and email)
-                let { dbField, value } = req.body;
                 if (dbField === 'user_name') {
                     const resp = await Db.checkDuplicateUsername(userId, value);
                     if (!resp.result) {

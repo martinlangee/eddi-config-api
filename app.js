@@ -2,8 +2,9 @@ const { StatusCodes } = require("http-status-codes");
 const express = require("express");
 const bodyParser = require("body-parser");
 var cors = require('cors');
+const Db = require("./db");
 
-if (!process.env.NODEJS_ENABLE_LOGS) {
+if (process.env.NODE_ENV !== Db.ENV_DEV) {
     console.log("Disabling all logs in production mode");
     for (let func in console) {
         console[func] = function() {};

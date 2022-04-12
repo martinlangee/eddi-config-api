@@ -3,6 +3,13 @@ const express = require("express");
 const bodyParser = require("body-parser");
 var cors = require('cors');
 
+if (!process.env.NODEJS_ENABLE_LOGS) {
+    console.log("Disabling all logs in production mode");
+    for (let func in console) {
+        console[func] = function() {};
+    }
+}
+
 const app = express();
 
 const { checkUser } = require("./middleware/authMiddleware");
@@ -27,6 +34,10 @@ app.use(function(req, res, next) {
     );
     next();
 });
+
+// set limits for body data size to 2 MB (for image upload)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: false }));
 
 // parse requests of content-type - application/json
 app.use(bodyParser.json());

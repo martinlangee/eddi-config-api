@@ -1,4 +1,4 @@
-# EDDI - WBS Final Project
+# EDDI Config API - a WBS Final Project
 
 Server-Side Module
 

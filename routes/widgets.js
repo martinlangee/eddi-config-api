@@ -15,6 +15,7 @@ const WIDGET_COLUMNS = `${Db.TWIDGETS}.id,
                         ${Db.TWIDGETS}.size_x, 
                         ${Db.TWIDGETS}.size_y, 
                         ${Db.TWIDGETS}.thumbnail, 
+                        ${Db.TWIDGETS}.content, 
                         ${Db.TWIDGETS}.public, 
                         to_char(${Db.TWIDGETS}.created, ${Db.DATETIME_DISPLAY_FORMAT}) as created, 
                         to_char(${Db.TWIDGETS}.last_saved, ${Db.DATETIME_DISPLAY_FORMAT}) as last_saved, 
@@ -38,7 +39,7 @@ widgetsRouter.route('')
                      JOIN ${Db.TUSERS}
                        ON user_id = ${Db.TUSERS}.id
                      WHERE user_id = ${userId}${querySeePublic};`;
-                console.log({ userId, seePublic, queryStr });
+                console.log({ queryStr });
                 const result = await Db.pool().query(queryStr);
                 res.status(StatusCodes.OK).json(result.rows);
             })

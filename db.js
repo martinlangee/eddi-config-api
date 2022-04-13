@@ -211,7 +211,6 @@ const getSeePublicWidgets = async(userId) => {
          WHERE id = ${userId}`;
     console.log({ queryStr });
     const res = await pool().query(queryStr);
-    console.log({ res });
     return res.rows[0].see_public_widgets === true;
 }
 

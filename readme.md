@@ -1,6 +1,6 @@
 # EDDI Config API - a WBS Final Project
 
-Server-Side module of the EDDI Configurator web site [https://github.com/martinlangee/eddi-configurator](https://github.com/martinlangee/eddi-configurator).
+Server-Side module of the EDDI Configurator web site. Web site project on GitHub: [https://github.com/martinlangee/eddi-configurator](https://github.com/martinlangee/eddi-configurator).
 
 To run the project locally, you have to run a PostgreSQL instance with a DB called "eddi_db". The tables are created automatically. Enter the DB credentials in the "db.js" file.
 
